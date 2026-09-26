@@ -1,0 +1,3754 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light" data-style="minimal">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f3ee">
+<title>习惯 &amp; 待办</title>
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- iOS 专属支持 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="习惯待办">
+  <link rel="apple-touch-icon" href="icon-192.png">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('ht_theme_v1');
+    var s = localStorage.getItem('ht_style_v1');
+    if (t) document.documentElement.dataset.theme = t;
+    if (s) document.documentElement.dataset.style = s;
+  } catch (e) {}
+})();
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    color-scheme: light;
+    --base-size: 96px;
+    --font: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', 'Segoe UI', sans-serif;
+    --font-display: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', 'Segoe UI', sans-serif;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --radius-xs: 6px;
+    --transition: .25s cubic-bezier(.4, 0, .2, 1);
+
+    --bg: #f5f3ee;
+    --bg-secondary: #eeebe4;
+    --card-bg: #ffffff;
+    --card-border: #e4dfd6;
+    --text: #3a3a38;
+    --text-secondary: #6b6a66;
+    --text-muted: #9a9892;
+
+    --accent: #4a9e8a;
+    --accent-hover: #3d8a78;
+    --accent-light: #e8f4f0;
+    --accent-border: #b8dcd2;
+    --accent-ring: rgba(74, 158, 138, .14);
+
+    --input-bg: #faf9f7;
+    --input-border: #ddd9d0;
+
+    --danger: #c4726a;
+    --danger-light: #f9eae8;
+    --success: #5ba88d;
+    --success-light: #e8f4f0;
+
+    --progress-bg: #eae7e0;
+    --overlay: rgba(60, 55, 50, .35);
+
+    --m1: #4a9e8a;
+    --m2: #5b8db8;
+
+    --grad-m1: linear-gradient(145deg, #6bbfae 0%, #4a9e8a 55%, #3d8a78 100%);
+    --grad-m2: linear-gradient(145deg, #7ba6cc 0%, #5b8db8 55%, #477ba8 100%);
+    --folder-shadow: rgba(74, 158, 138, .38);
+    --folder-shadow-2: rgba(91, 141, 184, .38);
+    --folder-inset: inset 0 1px 0 rgba(255, 255, 255, .32);
+    --folder-radius: calc(var(--block-size, 96px) * .24);
+    --folder-ink: rgba(0, 0, 0, .12);
+
+    --toast-bg: #ffffff;
+    --toast-text: #3a3a38;
+
+    --shadow: 0 2px 16px rgba(0, 0, 0, .06), 0 1px 4px rgba(0, 0, 0, .04);
+    --shadow-hover: 0 6px 28px rgba(0, 0, 0, .10), 0 2px 8px rgba(0, 0, 0, .06);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, .18);
+    --shadow-toast: 0 8px 32px rgba(0, 0, 0, .16);
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #181b20;
+    --bg-secondary: #202328;
+    --card-bg: #252a30;
+    --card-border: #32373e;
+    --text: #d4d6da;
+    --text-secondary: #a0a4ac;
+    --text-muted: #6e727a;
+
+    --accent: #6bb5b0;
+    --accent-hover: #7cc8c3;
+    --accent-light: #1e3330;
+    --accent-border: #3a5a56;
+    --accent-ring: rgba(107, 181, 176, .18);
+
+    --input-bg: #1d2025;
+    --input-border: #383d45;
+
+    --danger: #c97a72;
+    --danger-light: #332522;
+    --success: #6bb5a0;
+    --success-light: #1e332d;
+
+    --progress-bg: #32373e;
+    --overlay: rgba(0, 0, 0, .60);
+
+    --m1: #6bb5b0;
+    --m2: #7b9ec7;
+
+    --grad-m1: linear-gradient(145deg, #4f9d96 0%, #3d7d78 55%, #2f625e 100%);
+    --grad-m2: linear-gradient(145deg, #63809c 0%, #4e6b87 55%, #3c5570 100%);
+    --folder-shadow: rgba(0, 0, 0, .45);
+    --folder-shadow-2: rgba(0, 0, 0, .45);
+    --folder-inset: inset 0 1px 0 rgba(255, 255, 255, .14);
+    --folder-ink: rgba(255, 255, 255, .14);
+
+    --toast-bg: #2a2f36;
+    --toast-text: #d4d6da;
+
+    --shadow: 0 2px 16px rgba(0, 0, 0, .30), 0 1px 4px rgba(0, 0, 0, .20);
+    --shadow-hover: 0 6px 28px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .30);
+    --shadow-modal: 0 20px 60px rgba(0, 0, 0, .60);
+    --shadow-toast: 0 8px 32px rgba(0, 0, 0, .50);
+  }
+
+  /* ============================================================
+     ★ 杂志感 · 浅色
+     ============================================================ */
+  html[data-style="magazine"] {
+    --font: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, 'Times New Roman', serif;
+    --font-display: 'Playfair Display', 'Bodoni MT', 'Noto Serif SC', 'Songti SC', Georgia, serif;
+
+    --radius: 1px;
+    --radius-sm: 1px;
+    --radius-xs: 1px;
+
+    --bg: #f2efe9;
+    --bg-secondary: #ffffff;
+    --card-bg: #ffffff;
+    --card-border: #ded8cd;
+    --text: #0c0c0c;
+    --text-secondary: #56524b;
+    --text-muted: #948d81;
+
+    --accent: #cf2e21;
+    --accent-hover: #b32419;
+    --accent-light: #fdeceb;
+    --accent-border: #f0b9b4;
+    --accent-ring: rgba(207, 46, 33, .13);
+
+    --input-bg: #ffffff;
+    --input-border: #d9d3c8;
+
+    --danger: #cf2e21;
+    --danger-light: #fdeceb;
+    --success: #111111;
+    --success-light: #eceae5;
+
+    --progress-bg: #e6e1d7;
+    --overlay: rgba(10, 10, 10, .55);
+
+    --m1: #161616;
+    --m2: #cf2e21;
+
+    --grad-m1: #171717;
+    --grad-m2: #cf2e21;
+    --folder-shadow: rgba(0, 0, 0, .22);
+    --folder-shadow-2: rgba(207, 46, 33, .28);
+    --folder-inset: inset 0 0 0 0 transparent;
+    --folder-radius: 2px;
+    --folder-ink: rgba(0, 0, 0, .08);
+
+    --toast-bg: #141414;
+    --toast-text: #f7f5f0;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .05);
+    --shadow-hover: 0 6px 20px rgba(0, 0, 0, .13);
+    --shadow-modal: 0 30px 80px rgba(0, 0, 0, .30);
+    --shadow-toast: 0 12px 36px rgba(0, 0, 0, .32);
+  }
+
+  html[data-theme="dark"][data-style="magazine"] {
+    --bg: #0e0e0e;
+    --bg-secondary: #191919;
+    --card-bg: #171717;
+    --card-border: #2e2b28;
+    --text: #f2efe9;
+    --text-secondary: #b0aaa1;
+    --text-muted: #7a746b;
+
+    --accent: #ff4433;
+    --accent-hover: #ff6152;
+    --accent-light: #2a1310;
+    --accent-border: #5c2822;
+    --accent-ring: rgba(255, 68, 51, .18);
+
+    --input-bg: #121212;
+    --input-border: #34302c;
+
+    --danger: #ff4433;
+    --danger-light: #2a1310;
+    --success: #f2efe9;
+    --success-light: #232320;
+
+    --progress-bg: #302c28;
+    --overlay: rgba(0, 0, 0, .72);
+
+    --m1: #eae7e1;
+    --m2: #ff4433;
+
+    --grad-m1: #eae7e1;
+    --grad-m2: #ff4433;
+    --folder-shadow: rgba(0, 0, 0, .60);
+    --folder-shadow-2: rgba(255, 68, 51, .35);
+    --folder-inset: inset 0 0 0 0 transparent;
+
+    --toast-bg: #f2efe9;
+    --toast-text: #0c0c0c;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .40);
+    --shadow-hover: 0 6px 24px rgba(0, 0, 0, .60);
+    --shadow-modal: 0 30px 80px rgba(0, 0, 0, .75);
+    --shadow-toast: 0 12px 36px rgba(0, 0, 0, .70);
+  }
+
+  /* ============================================================
+     ★ 手绘感 · 浅色
+     ============================================================ */
+  html[data-style="sketch"] {
+    --font: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', 'Kalam', 'Comic Sans MS', cursive, sans-serif;
+    --font-display: 'LXGW WenKai', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive, sans-serif;
+
+    --radius: 16px;
+    --radius-sm: 12px;
+    --radius-xs: 10px;
+
+    --bg: #fdf7ea;
+    --bg-secondary: #f6eeda;
+    --card-bg: #fffdf7;
+    --card-border: #c4b294;
+    --text: #3b322a;
+    --text-secondary: #6d6053;
+    --text-muted: #9d9184;
+
+    --accent: #e0784f;
+    --accent-hover: #cc6540;
+    --accent-light: #fdeee5;
+    --accent-border: #f0c4a8;
+    --accent-ring: rgba(224, 120, 79, .18);
+
+    --input-bg: #fffdf7;
+    --input-border: #d9c9a9;
+
+    --danger: #d95a4a;
+    --danger-light: #fdeae6;
+    --success: #6ba887;
+    --success-light: #e9f4ec;
+
+    --progress-bg: #ece0c6;
+    --overlay: rgba(60, 48, 35, .45);
+
+    --m1: #e0784f;
+    --m2: #7fa8c9;
+
+    --grad-m1: linear-gradient(150deg, #f0a075 0%, #e0784f 60%, #cc6540 100%);
+    --grad-m2: linear-gradient(150deg, #9dc0da 0%, #7fa8c9 60%, #6795b8 100%);
+    --folder-shadow: rgba(160, 110, 70, .35);
+    --folder-shadow-2: rgba(90, 130, 165, .35);
+    --folder-inset: inset 0 0 0 0 transparent;
+    --folder-radius: 26% 22% 24% 20% / 22% 26% 20% 24%;
+    --folder-ink: #4a3f34;
+
+    --toast-bg: #fffdf7;
+    --toast-text: #3b322a;
+
+    --shadow: 2px 3px 0 rgba(59, 50, 42, .10);
+    --shadow-hover: 4px 6px 0 rgba(59, 50, 42, .14);
+    --shadow-modal: 6px 10px 0 rgba(59, 50, 42, .18);
+    --shadow-toast: 4px 6px 0 rgba(59, 50, 42, .16);
+  }
+
+  html[data-theme="dark"][data-style="sketch"] {
+    --bg: #26211c;
+    --bg-secondary: #2f2923;
+    --card-bg: #2b2620;
+    --card-border: #574c40;
+    --text: #f0e7d8;
+    --text-secondary: #c0b3a0;
+    --text-muted: #8d8171;
+
+    --accent: #f09268;
+    --accent-hover: #f5a482;
+    --accent-light: #3d2c22;
+    --accent-border: #6b4c38;
+    --accent-ring: rgba(240, 146, 104, .20);
+
+    --input-bg: #241f1a;
+    --input-border: #4c4238;
+
+    --danger: #ef8574;
+    --danger-light: #3d2721;
+    --success: #8ec9a8;
+    --success-light: #24352b;
+
+    --progress-bg: #3d362d;
+    --overlay: rgba(0, 0, 0, .70);
+
+    --m1: #f09268;
+    --m2: #96bcd8;
+
+    --grad-m1: linear-gradient(150deg, #d9885e 0%, #b96e49 60%, #98583a 100%);
+    --grad-m2: linear-gradient(150deg, #7ea3bf 0%, #6388a4 60%, #4e6f8a 100%);
+    --folder-shadow: rgba(0, 0, 0, .50);
+    --folder-shadow-2: rgba(0, 0, 0, .50);
+    --folder-ink: #8a7660;
+
+    --toast-bg: #2b2620;
+    --toast-text: #f0e7d8;
+
+    --shadow: 2px 3px 0 rgba(0, 0, 0, .35);
+    --shadow-hover: 4px 6px 0 rgba(0, 0, 0, .45);
+    --shadow-modal: 6px 10px 0 rgba(0, 0, 0, .55);
+    --shadow-toast: 4px 6px 0 rgba(0, 0, 0, .50);
+  }
+
+  /* ============================================================
+     杂志感 · 组件细节
+     ============================================================ */
+  html[data-style="magazine"] body { letter-spacing: .005em; }
+
+  html[data-style="magazine"] header {
+    border-bottom: 2px solid var(--text);
+    padding: 0 2px 10px;
+    margin-bottom: 12px;
+  }
+
+  html[data-style="magazine"] h1 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -.02em;
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+    color: var(--text);
+  }
+
+  html[data-style="magazine"] .date {
+    font-family: var(--font);
+    font-size: .68rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    color: var(--text-muted);
+  }
+
+  html[data-style="magazine"] .header-actions button {
+    border-radius: 0;
+    border-width: 1.5px;
+    box-shadow: none;
+  }
+
+  html[data-style="magazine"] .tabs {
+    padding: 0;
+    gap: 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--card-border);
+    border-radius: 0;
+    box-shadow: none;
+    margin-bottom: 12px;
+  }
+
+  html[data-style="magazine"] .tabs button {
+    border-radius: 0;
+    padding: 8px 4px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: .08em;
+    font-weight: 600;
+  }
+
+  html[data-style="magazine"] .tabs button.active {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  html[data-style="magazine"] .tabs button.active::after {
+    left: 0;
+    transform: none;
+    bottom: -1px;
+    width: 100%;
+    height: 2px;
+    border-radius: 0;
+    background: var(--accent);
+  }
+
+  html[data-style="magazine"] .tabs button[data-view="todo"].active::after {
+    background: var(--accent);
+  }
+
+  html[data-style="magazine"] .goal-card {
+    gap: 0;
+    border-top: 1px solid var(--card-border);
+    border-bottom: 1px solid var(--card-border);
+    margin-bottom: 12px;
+  }
+
+  html[data-style="magazine"] .goal-item {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 12px 12px 12px 0;
+  }
+
+  html[data-style="magazine"] .goal-item + .goal-item {
+    border-left: 1px solid var(--card-border);
+    padding-left: 14px;
+    padding-right: 0;
+  }
+
+  html[data-style="magazine"] .goal-item.done { box-shadow: none; }
+
+  html[data-style="magazine"] .goal-title {
+    font-family: var(--font);
+    font-size: .66rem;
+    letter-spacing: .14em;
+    font-weight: 700;
+  }
+
+  html[data-style="magazine"] .goal-count { font-family: var(--font); letter-spacing: .04em; }
+
+  html[data-style="magazine"] .goal-current {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+  }
+
+  html[data-style="magazine"] .goal-bar { height: 4px; border-radius: 0; }
+  html[data-style="magazine"] .goal-fill { border-radius: 0; }
+
+  html[data-style="magazine"] .layout-toggle {
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    border: 1px solid var(--card-border);
+    padding: 0;
+    gap: 0;
+  }
+
+  html[data-style="magazine"] .layout-toggle button {
+    border-radius: 0;
+    padding: 8px 12px;
+    font-family: var(--font);
+    letter-spacing: .08em;
+  }
+
+  html[data-style="magazine"] .layout-toggle button.active {
+    background: var(--text);
+    color: var(--card-bg);
+    box-shadow: none;
+  }
+
+  html[data-style="magazine"] .size-slider {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  html[data-style="magazine"] input[type="range"] { border-radius: 0; }
+
+  html[data-style="magazine"] input[type="range"]::-webkit-slider-thumb {
+    border-radius: 0;
+    width: 11px; height: 17px;
+    border-width: 0;
+    background: var(--accent);
+  }
+
+  html[data-style="magazine"] input[type="range"]::-moz-range-thumb {
+    border-radius: 0;
+    width: 11px; height: 17px;
+    border-width: 0;
+    background: var(--accent);
+  }
+
+  html[data-style="magazine"] input[type="text"] {
+    border-radius: 0;
+    border-width: 0 0 1.5px 0;
+    background: transparent;
+    padding-left: 2px;
+  }
+
+  html[data-style="magazine"] input[type="text"]:focus {
+    box-shadow: none;
+    border-color: var(--accent);
+  }
+
+  html[data-style="magazine"] form button {
+    border-radius: 0;
+    letter-spacing: .1em;
+    font-weight: 600;
+  }
+
+  html[data-style="magazine"] .folder-icon-wrap {
+    box-shadow: 0 0 0 1px var(--folder-ink), 0 3px 8px -3px rgba(0, 0, 0, .22);
+  }
+
+  html[data-style="magazine"] .folder-icon-wrap::after { display: none; }
+
+  html[data-style="magazine"] .folder-item:hover .folder-icon-wrap {
+    transform: translateY(-4px);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .16), 0 10px 22px -8px rgba(0, 0, 0, .30);
+  }
+
+  html[data-style="magazine"] .folder-item.done .folder-icon-wrap {
+    box-shadow: 0 0 0 3px var(--accent), 0 3px 8px -3px rgba(0, 0, 0, .20);
+  }
+
+  html[data-style="magazine"] .folder-badge {
+    border-radius: 0;
+    font-family: var(--font);
+    font-size: .6rem;
+    letter-spacing: .08em;
+    padding: 2px 6px;
+    box-shadow: none;
+  }
+
+  html[data-style="magazine"] .folder-name {
+    font-family: var(--font-display);
+    font-size: .82rem;
+  }
+
+  html[data-style="magazine"] dialog.sheet {
+    border-top: 3px solid var(--text);
+    padding: 24px;
+  }
+
+  html[data-style="magazine"] .group-icon::after { display: none; }
+
+  html[data-style="magazine"] .sub-item {
+    border-width: 0 0 1px 0;
+    background: transparent;
+    padding: 12px 4px;
+  }
+
+  html[data-style="magazine"] .sub-item:hover {
+    background: var(--accent-light);
+    box-shadow: none;
+    border-color: var(--accent-border);
+  }
+
+  html[data-style="magazine"] .tick { width: 22px; height: 22px; }
+
+  html[data-style="magazine"] .sub-name { font-weight: 500; }
+
+  html[data-style="magazine"] .empty { font-family: var(--font-display); }
+
+  html[data-style="magazine"] .toast { border-left-width: 5px; }
+
+  html[data-style="magazine"] .block-settings,
+  html[data-style="magazine"] .icon-picker {
+    background: transparent;
+    border: 1px solid var(--card-border);
+  }
+
+  html[data-style="magazine"] .switch { width: 40px; height: 22px; }
+
+  html[data-style="magazine"] .switch-knob {
+    width: 16px; height: 16px;
+    top: 3px; left: 3px;
+    border-radius: 0;
+  }
+
+  html[data-style="magazine"] .switch[aria-checked="true"] .switch-knob {
+    transform: translateX(18px);
+  }
+
+  html[data-style="magazine"] .grid.float-mode::before { opacity: .3; }
+
+  /* ============================================================
+     手绘感 · 组件细节
+     ============================================================ */
+  html[data-style="sketch"] body {
+    background-image:
+      radial-gradient(circle at 14% 16%, rgba(196, 166, 116, .13) 0%, transparent 44%),
+      radial-gradient(circle at 86% 74%, rgba(196, 166, 116, .11) 0%, transparent 46%);
+  }
+
+  html[data-style="sketch"] h1 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+    background: none;
+    -webkit-background-clip: border-box;
+    background-clip: border-box;
+    -webkit-text-fill-color: currentColor;
+    color: var(--text);
+    position: relative;
+    display: inline-block;
+    padding-bottom: 5px;
+  }
+
+  html[data-style="sketch"] h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 68%;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 4px 2px 5px 2px;
+    transform: rotate(-.7deg);
+    opacity: .85;
+  }
+
+  html[data-style="sketch"] .date {
+    font-size: .75rem;
+    letter-spacing: .04em;
+    margin-top: 4px;
+  }
+
+  html[data-style="sketch"] .header-actions button {
+    border-radius: 12px 10px 13px 9px / 10px 13px 9px 12px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] .tabs {
+    border-radius: 18px 14px 17px 13px / 14px 18px 13px 17px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] .tabs button {
+    border-radius: 13px 10px 12px 10px / 10px 13px 10px 12px;
+    font-weight: 700;
+  }
+
+  html[data-style="sketch"] .tabs button.active {
+    box-shadow: 2px 2px 0 rgba(59, 50, 42, .14);
+  }
+
+  html[data-style="sketch"] .tabs button.active::after { display: none; }
+
+  html[data-style="sketch"] .goal-item {
+    border-width: 2px;
+    border-radius: 16px 12px 15px 11px / 12px 16px 11px 15px;
+  }
+
+  html[data-style="sketch"] .goal-bar { border-radius: 99px; }
+  html[data-style="sketch"] .goal-fill { border-radius: 99px; }
+
+  html[data-style="sketch"] .layout-toggle {
+    border-radius: 16px 12px 15px 11px / 12px 16px 11px 15px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] .layout-toggle button {
+    border-radius: 12px 9px 11px 9px / 9px 12px 9px 11px;
+  }
+
+  html[data-style="sketch"] .size-slider {
+    border-radius: 16px 12px 15px 11px / 12px 16px 11px 15px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] input[type="range"]::-webkit-slider-thumb {
+    border-radius: 50% 46% 52% 48% / 48% 52% 46% 50%;
+  }
+
+  html[data-style="sketch"] input[type="text"] {
+    border-radius: 12px 9px 11px 9px / 9px 12px 9px 11px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] form button {
+    border-radius: 13px 10px 12px 10px / 10px 13px 10px 12px;
+    border-width: 2px;
+    font-weight: 700;
+  }
+
+  html[data-style="sketch"] .folder-icon-wrap {
+    border: 2.5px solid var(--folder-ink);
+    box-shadow: 3px 4px 0 rgba(59, 50, 42, .16);
+  }
+
+  html[data-style="sketch"] .folder-icon-wrap::after { display: none; }
+
+  html[data-style="sketch"] .folder-item:hover .folder-icon-wrap {
+    transform: translateY(-3px) rotate(-1.5deg);
+    box-shadow: 5px 7px 0 rgba(59, 50, 42, .20);
+  }
+
+  html[data-style="sketch"] .folder-item:active .folder-icon-wrap {
+    transform: scale(.96) rotate(1deg);
+  }
+
+  html[data-style="sketch"] .folder-item.done .folder-icon-wrap {
+    box-shadow: 3px 4px 0 rgba(59, 50, 42, .16), inset 0 0 0 3px var(--success);
+  }
+
+  html[data-style="sketch"] .folder-badge {
+    border-radius: 9px 7px 8px 7px / 7px 9px 7px 8px;
+    border-width: 2px;
+  }
+
+  html[data-style="sketch"] .folder-name {
+    font-size: .82rem;
+    font-weight: 700;
+  }
+
+  html[data-style="sketch"] .grid:not(.float-mode) .folder-item:nth-child(3n+1) {
+    transform: rotate(-1.2deg);
+  }
+  html[data-style="sketch"] .grid:not(.float-mode) .folder-item:nth-child(3n+2) {
+    transform: rotate(.9deg);
+  }
+  html[data-style="sketch"] .grid:not(.float-mode) .folder-item:nth-child(3n) {
+    transform: rotate(-.4deg);
+  }
+
+  html[data-style="sketch"] .grid.float-mode {
+    border-width: 2px;
+    border-radius: 20px 16px 18px 14px / 16px 20px 14px 18px;
+  }
+
+  html[data-style="sketch"] dialog.sheet {
+    border-width: 2px;
+    border-radius: 20px 16px 18px 14px / 16px 20px 14px 18px;
+  }
+
+  html[data-style="sketch"] .group-icon {
+    border: 2.5px solid var(--folder-ink);
+    border-radius: 14px 11px 13px 10px / 11px 14px 10px 13px;
+  }
+
+  html[data-style="sketch"] .group-icon::after { display: none; }
+
+  html[data-style="sketch"] .sub-item {
+    border-width: 2px;
+    border-radius: 13px 10px 12px 10px / 10px 13px 10px 12px;
+  }
+
+  html[data-style="sketch"] .tick { border-width: 2px; }
+
+  html[data-style="sketch"] .block-settings,
+  html[data-style="sketch"] .icon-picker {
+    border-width: 2px;
+    border-radius: 14px 11px 13px 10px / 11px 14px 10px 13px;
+  }
+
+  html[data-style="sketch"] .icon-choice {
+    border-width: 2px;
+    border-radius: 11px 9px 10px 9px / 9px 11px 9px 10px;
+  }
+
+  html[data-style="sketch"] .icon-upload {
+    border-width: 2px;
+    border-radius: 13px 10px 12px 10px / 10px 13px 10px 12px;
+  }
+
+  html[data-style="sketch"] .group-actions button,
+  html[data-style="sketch"] .edit-btn {
+    border-width: 2px;
+    border-radius: 13px 10px 12px 10px / 10px 13px 10px 12px;
+  }
+
+  html[data-style="sketch"] .empty {
+    border-width: 2px;
+    border-style: dashed;
+    border-radius: 16px 12px 15px 11px / 12px 16px 11px 15px;
+  }
+
+  html[data-style="sketch"] .toast {
+    border-width: 2px;
+    border-left-width: 6px;
+    border-radius: 14px 11px 13px 10px / 11px 14px 10px 13px;
+  }
+
+  html[data-style="sketch"] .switch { border-radius: 999px; }
+
+  /* ============================================================
+     ★ 全局布局锁定（核心修改：最大化漂浮、锁定上下不滑动）
+     ============================================================ */
+  html {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden; /* 禁止页面整体滚动 */
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 var(--font);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: .01em;
+    padding: 8px 10px 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+    gap: 8px;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--radius-xs); }
+
+  /* ---------- 头部紧凑化 ---------- */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0 0;
+    margin-bottom: 0;
+  }
+  header > div:first-child { min-width: 0; }
+
+  h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--m1), var(--m2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .date {
+    margin-top: 1px;
+    font-size: .68rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: .05em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .header-actions { display: flex; gap: 4px; flex: 0 0 auto; }
+  .header-actions button {
+    width: 32px; height: 32px;
+    font-size: .8rem; line-height: 1;
+    color: var(--text-secondary);
+    background: var(--card-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+    display: grid; place-items: center;
+  }
+  .header-actions button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+    transform: translateY(-1px);
+  }
+  .header-actions button:active { transform: scale(.95); }
+
+  /* ---------- Tabs 紧凑化 ---------- */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    margin-bottom: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: background var(--transition), border-color var(--transition);
+  }
+  .tabs button {
+    flex: 1;
+    padding: 6px 10px;
+    font: 500 .8rem/1.2 var(--font);
+    letter-spacing: .02em;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+  }
+  .tabs button:hover:not(.active) { color: var(--text); background: rgba(128, 128, 128, .07); }
+  .tabs button.active {
+    color: var(--text);
+    background: var(--card-bg);
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
+  }
+  .tabs button.active::after {
+    content: '';
+    position: absolute;
+    bottom: 1px; left: 50%;
+    transform: translateX(-50%);
+    width: 16px; height: 2px;
+    border-radius: 2px;
+    background: var(--m1);
+    transition: background var(--transition);
+  }
+  .tabs button[data-view="todo"].active::after { background: var(--m2); }
+
+  /* ---------- 目标进度卡紧凑化 ---------- */
+  .goal-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+  .goal-item {
+    padding: 8px 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    min-width: 0;
+  }
+  .goal-item.done {
+    border-color: var(--success);
+    box-shadow: 0 0 0 1px var(--success-light), var(--shadow);
+  }
+  .goal-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    gap: 6px;
+  }
+  .goal-title {
+    font-size: .65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: .04em;
+  }
+  .goal-count {
+    font-size: .6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .goal-current {
+    font-size: .85rem;
+    font-weight: 700;
+    margin-right: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  #goalHabit .goal-current { color: var(--m1); }
+  #goalTodo .goal-current { color: var(--m2); }
+  .goal-item.done .goal-current { color: var(--success); }
+
+  .goal-bar {
+    height: 5px;
+    background: var(--progress-bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .goal-fill {
+    height: 100%;
+    width: 0;
+    background: var(--m1);
+    border-radius: 4px;
+    transition: width .7s cubic-bezier(.34, 1.3, .64, 1), background var(--transition);
+  }
+  .goal-fill.todo { background: var(--m2); }
+  .goal-item.done .goal-fill { background: var(--success); }
+
+  /* ---------- 布局控制条紧凑化 ---------- */
+  .layout-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+  .layout-toggle {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    flex: 0 0 auto;
+    box-shadow: var(--shadow);
+  }
+  .layout-toggle button {
+    padding: 5px 10px;
+    font: 500 .72rem/1 var(--font);
+    letter-spacing: .02em;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .layout-toggle button:hover:not(.active) { color: var(--text); background: rgba(128, 128, 128, .07); }
+  .layout-toggle button.active {
+    color: var(--accent);
+    background: var(--card-bg);
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .07);
+  }
+
+  .size-slider {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    height: 30px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .size-slider .slider-icon { font-size: .75rem; flex: 0 0 auto; opacity: .6; }
+  .size-slider .slider-value {
+    flex: 0 0 auto;
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* ---------- Range 通用 ---------- */
+  input[type="range"] {
+    flex: 1;
+    min-width: 0;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--progress-bg);
+    border-radius: 99px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2.5px solid var(--card-bg);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .22);
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2.5px solid var(--card-bg);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .22);
+    cursor: pointer;
+  }
+
+  /* ---------- 表单紧凑化 ---------- */
+  form { display: flex; gap: 6px; margin-bottom: 0; }
+  dialog.sheet form { margin-bottom: 0; }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    font: 400 .8rem/1.4 var(--font);
+    letter-spacing: .01em;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  }
+  input[type="text"]::placeholder { color: var(--text-muted); }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+
+  form button {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    font: 500 .78rem/1.4 var(--font);
+    letter-spacing: .02em;
+    color: #fff;
+    background: var(--accent);
+    border: 1.5px solid var(--accent);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  form button:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: 0 3px 12px rgba(74, 158, 138, .30);
+  }
+  form button:active { transform: scale(.96); }
+
+  /* ============================================================
+     ★ 弹性内容面板（核心修改：自适应撑满剩余高度）
+     ============================================================ */
+  section#panelHabit,
+  section#panelTodo {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0; /* 关键：允许在 flex 容器内滚动和自适应 */
+    gap: 8px;
+  }
+
+  /* ---------- 网格/漂浮区 ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(calc(var(--base-size, 96px) + 24px), 1fr));
+    gap: 18px 12px;
+    min-height: 0;
+    justify-items: center;
+    align-items: start;
+    flex: 1;
+    overflow-y: auto; /* 网格模式内部滚动，页面不滑动 */
+    padding-bottom: 20px;
+  }
+
+  /* ---------- 漂浮模式最大化 ---------- */
+  .grid.float-mode {
+    display: block;
+    position: relative;
+    height: auto !important; /* 覆盖 62vh */
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+    margin-bottom: 0;
+    padding: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    touch-action: none;
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .grid.float-mode::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--card-border) 1px, transparent 1px);
+    background-size: 22px 22px;
+    opacity: .65;
+    pointer-events: none;
+    border-radius: inherit;
+    mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 92%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 92%);
+  }
+
+  .grid.float-mode .folder-item {
+    position: absolute;
+    top: 0; left: 0;
+    width: var(--block-size);
+    height: var(--block-size);
+    margin: 0;
+    will-change: transform;
+    touch-action: none;
+    cursor: grab;
+    transition: none;
+  }
+  .grid.float-mode .folder-item.dragging {
+    cursor: grabbing;
+    z-index: 20;
+  }
+  .grid.float-mode .folder-item.dragging .folder-icon-wrap {
+    box-shadow:
+      var(--folder-inset),
+      0 20px 40px -10px var(--f-shadow),
+      0 8px 18px -4px var(--f-shadow);
+    transform: scale(1.06);
+  }
+  .grid.float-mode .folder-item:hover .folder-icon-wrap { transform: none; }
+  .grid.float-mode .folder-item.dragging:hover .folder-icon-wrap { transform: scale(1.06); }
+
+  .grid.float-mode .folder-name {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(var(--block-size) * 1.5);
+    pointer-events: none;
+  }
+
+  /* ---------- 网格内的文件夹项 ---------- */
+  .folder-item {
+    --size-factor: 1;
+    --block-size: calc(var(--base-size, 96px) * var(--size-factor, 1));
+    --f-grad: var(--grad-m1);
+    --f-shadow: var(--folder-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform .2s;
+  }
+  #panelTodo .folder-item {
+    --f-grad: var(--grad-m2);
+    --f-shadow: var(--folder-shadow-2);
+  }
+
+  .folder-icon-wrap {
+    width: var(--block-size);
+    height: var(--block-size);
+    display: grid;
+    place-items: center;
+    font-size: calc(var(--block-size) * .42);
+    line-height: 1;
+    background: var(--f-grad);
+    border-radius: var(--folder-radius, calc(var(--block-size) * .24));
+    box-shadow:
+      var(--folder-inset),
+      0 6px 18px -6px var(--f-shadow),
+      0 2px 6px -2px var(--f-shadow);
+    transition: transform .25s cubic-bezier(.34, 1.4, .64, 1), box-shadow .25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .folder-icon-wrap::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(150deg, rgba(255, 255, 255, .30) 0%, rgba(255, 255, 255, .05) 34%, transparent 58%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .folder-icon-wrap.has-image::after {
+    background: linear-gradient(150deg, rgba(255, 255, 255, .22), transparent 45%);
+  }
+
+  .folder-icon-wrap img {
+    width: 100%; height: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: inherit;
+    position: relative;
+    z-index: 0;
+  }
+
+  .folder-icon-wrap > span[aria-hidden] {
+    pointer-events: none;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .18));
+  }
+  .folder-icon-wrap.has-image > span[aria-hidden] { filter: none; }
+
+  .folder-item:hover .folder-icon-wrap {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow:
+      var(--folder-inset),
+      0 12px 26px -8px var(--f-shadow),
+      0 4px 10px -3px var(--f-shadow);
+  }
+  .folder-item:active .folder-icon-wrap { transform: scale(.96); transition-duration: .1s; }
+
+  .folder-item.done .folder-icon-wrap {
+    box-shadow:
+      inset 0 0 0 3px var(--success),
+      0 6px 18px -6px var(--f-shadow);
+  }
+
+  .folder-badge {
+    position: absolute;
+    bottom: calc(var(--block-size) * .07);
+    right: calc(var(--block-size) * .07);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 9px;
+    padding: 1px 7px;
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .10);
+    font-variant-numeric: tabular-nums;
+  }
+  .folder-item.done .folder-badge {
+    color: #fff;
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .folder-name {
+    font-size: .8rem;
+    font-weight: 600;
+    text-align: center;
+    word-break: break-word;
+    max-width: calc(var(--block-size) * 1.2);
+    line-height: 1.35;
+    color: var(--text);
+    letter-spacing: .01em;
+  }
+
+  /* 图钉按钮 */
+  .pin-btn {
+    position: absolute;
+    top: 0; right: 0;
+    transform: translate(28%, -28%);
+    width: 24px; height: 24px;
+    padding: 0;
+    display: grid; place-items: center;
+    font-size: .68rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 6;
+    opacity: 0;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, .18);
+    transition: all var(--transition);
+  }
+  .grid.float-mode .folder-item:hover .pin-btn,
+  .grid.float-mode .folder-item:focus-within .pin-btn,
+  .grid.float-mode .folder-item.pinned .pin-btn { opacity: 1; }
+  .pin-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+    transform: translate(28%, -28%) scale(1.12);
+  }
+  .folder-item.pinned .pin-btn {
+    color: #fff;
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .folder-item.pinned .folder-icon-wrap {
+    box-shadow:
+      inset 0 0 0 3px var(--accent),
+      0 6px 18px -6px var(--f-shadow);
+  }
+
+  /* ---------- 弹窗 ---------- */
+  dialog.sheet {
+    width: min(460px, calc(100vw - 28px));
+    max-width: none;
+    max-height: 85vh;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    color: var(--text);
+    box-shadow: var(--shadow-modal);
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  dialog.sheet[open] {
+    display: flex;
+    animation: sheet-in .25s cubic-bezier(.34, 1.3, .64, 1);
+  }
+  dialog.sheet::backdrop {
+    background: var(--overlay);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    animation: fade-in .25s ease-out;
+  }
+  @keyframes sheet-in { from { opacity: 0; transform: translateY(14px) scale(.97); } }
+  @keyframes fade-in { from { opacity: 0; } }
+
+  .group-head { display: flex; align-items: center; gap: 12px; }
+
+  .group-icon {
+    width: 54px; height: 54px;
+    border-radius: 15px;
+    font-size: 1.4rem;
+    background: var(--grad-m1);
+    border: none;
+    cursor: pointer;
+    display: grid; place-items: center;
+    flex: 0 0 auto;
+    overflow: hidden;
+    padding: 0;
+    position: relative;
+    box-shadow:
+      var(--folder-inset),
+      0 6px 16px -6px var(--folder-shadow);
+    transition: transform .15s, box-shadow var(--transition);
+  }
+  #todoGroupDialog .group-icon {
+    background: var(--grad-m2);
+    box-shadow:
+      var(--folder-inset),
+      0 6px 16px -6px var(--folder-shadow-2);
+  }
+  .group-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(150deg, rgba(255, 255, 255, .30), transparent 48%);
+    pointer-events: none;
+  }
+  .group-icon img { width: 100%; height: 100%; display: block; object-fit: cover; position: relative; z-index: 1; }
+  .group-icon:active { transform: scale(.94); }
+  .group-icon:hover { box-shadow: 0 8px 20px -6px var(--folder-shadow); }
+
+  dialog.sheet .group-title {
+    flex: 1;
+    min-width: 0;
+    font: 600 1.02rem/1.4 var(--font);
+    letter-spacing: .02em;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+  }
+  dialog.sheet .group-title:focus {
+    border-color: var(--accent);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+  }
+
+  /* 编辑按钮 */
+  .edit-btn {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font: 500 .78rem/1 var(--font);
+    color: var(--text-secondary);
+    background: var(--input-bg);
+    border: 1.5px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .edit-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .group-stats {
+    font-size: .78rem;
+    color: var(--text-muted);
+    padding: 0 2px;
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
+
+  /* ---------- 块设置 ---------- */
+  .block-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 40px;
+  }
+  .setting-label {
+    flex: 0 0 auto;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 62px;
+    letter-spacing: .02em;
+  }
+  .setting-value {
+    flex: 0 0 auto;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--accent);
+    min-width: 38px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .setting-hint {
+    flex: 1;
+    font-size: .7rem;
+    color: var(--text-muted);
+    text-align: right;
+  }
+
+  .switch {
+    position: relative;
+    width: 44px; height: 26px;
+    padding: 0;
+    background: var(--input-border);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background var(--transition);
+    flex: 0 0 auto;
+  }
+  .switch[aria-checked="true"] {
+    background: var(--accent);
+    box-shadow: 0 3px 10px -3px rgba(74, 158, 138, .5);
+  }
+  .switch-knob {
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 20px; height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
+    transition: transform var(--transition);
+  }
+  .switch[aria-checked="true"] .switch-knob { transform: translateX(18px); }
+
+  /* ---------- 图标选择器 ---------- */
+  .icon-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+  }
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 6px;
+    max-height: 190px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 2px;
+  }
+  .icon-choice {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0;
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .icon-choice:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    transform: scale(1.08);
+  }
+  .icon-choice.active {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-ring);
+  }
+  .icon-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 11px;
+    font: 600 .78rem/1 var(--font);
+    letter-spacing: .02em;
+    color: var(--accent);
+    background: var(--card-bg);
+    border: 1.5px dashed var(--accent-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .icon-upload:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+  }
+  .icon-upload:active { transform: scale(.98); }
+
+  /* ---------- 子项列表 ---------- */
+  .sub-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 40vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sub-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition);
+    cursor: pointer;
+  }
+  .sub-item:hover {
+    border-color: var(--accent-border);
+    background: var(--card-bg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+  }
+  .sub-item:active {
+    transform: scale(0.99);
+  }
+
+  .sub-name {
+    flex: 1;
+    min-width: 0;
+    font-size: .85rem;
+    font-weight: 600;
+    word-break: break-word;
+    letter-spacing: .01em;
+  }
+  .sub-name.done {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
+
+  .sub-meta {
+    flex: 0 0 auto;
+    font-size: .72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .tick {
+    flex: 0 0 auto;
+    width: 25px; height: 25px;
+    padding: 0;
+    display: grid; place-items: center;
+    font-size: .7rem; line-height: 1;
+    color: transparent;
+    background: transparent;
+    border: 2px solid var(--input-border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .tick:hover { border-color: var(--accent); transform: scale(1.08); }
+  .tick.on {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 3px 10px -3px rgba(74, 158, 138, .5);
+  }
+
+  .sub-del {
+    flex: 0 0 auto;
+    width: 26px; height: 26px;
+    padding: 0;
+    font: 400 .78rem/1 var(--font);
+    color: var(--text-muted);
+    background: none;
+    border: 0;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition);
+  }
+  .sub-item:hover .sub-del,
+  .sub-del:focus-visible { opacity: 1; }
+  .sub-del:hover {
+    color: var(--danger);
+    background: var(--danger-light);
+    transform: scale(1.08);
+  }
+
+  .group-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .group-actions button {
+    flex: 1;
+    min-width: 88px;
+    padding: 11px 10px;
+    font: 500 .82rem/1.2 var(--font);
+    letter-spacing: .02em;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .group-actions button:active { transform: scale(.97); }
+
+  .btn-secondary {
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    border-color: var(--input-border) !important;
+  }
+  .btn-secondary:hover {
+    border-color: var(--accent) !important;
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border-color: var(--danger) !important;
+  }
+  .btn-danger:hover {
+    background: var(--danger-light);
+  }
+
+  /* ---------- 空状态 ---------- */
+  .empty {
+    grid-column: 1 / -1;
+    padding: 30px 16px;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--text-muted);
+    background: var(--card-bg);
+    border: 1.5px dashed var(--card-border);
+    border-radius: var(--radius);
+    line-height: 1.9;
+    letter-spacing: .02em;
+    box-shadow: var(--shadow);
+  }
+  .sub-list .empty {
+    border-radius: var(--radius-sm);
+    padding: 24px 16px;
+    background: var(--bg-secondary);
+    border-color: var(--card-border);
+    box-shadow: none;
+  }
+  .grid.float-mode .empty {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(100% - 48px);
+    max-width: 340px;
+    z-index: 1;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--toast-bg);
+    color: var(--toast-text);
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-toast);
+    padding: 13px 16px;
+    font-size: .83rem;
+    font-weight: 500;
+    z-index: 300;
+    max-width: calc(100vw - 40px);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(calc(100% + 30px));
+    transition: transform .4s cubic-bezier(.34, 1.56, .64, 1), opacity .35s ease;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .toast.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .toast button {
+    background: none;
+    border: 0;
+    color: var(--accent);
+    font: 700 .78rem/1 var(--font);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    transition: background var(--transition);
+    flex-shrink: 0;
+  }
+  .toast button:hover { background: var(--accent-light); }
+
+  [hidden] { display: none !important; }
+
+  /* ---------- 响应式 (移动端进一步压缩，确保不滑动) ---------- */
+  @media (max-width: 480px) {
+    body { padding: 6px 8px 0; }
+    h1 { font-size: 1.05rem; }
+    .date { font-size: 0.62rem; }
+    .header-actions { gap: 3px; }
+    .header-actions button { width: 30px; height: 30px; font-size: .75rem; }
+
+    .goal-card { gap: 4px; }
+    .goal-item { padding: 6px 8px; }
+    .goal-title { font-size: .6rem; }
+    .goal-current { font-size: .8rem; }
+    .goal-count { font-size: .55rem; }
+
+    .layout-toggle button { padding: 4px 8px; font-size: .68rem; }
+    .size-slider { height: 28px; padding: 0 8px; }
+
+    .grid:not(.float-mode) {
+      grid-template-columns: repeat(auto-fill, minmax(calc(var(--base-size, 96px) * .85 + 16px), 1fr));
+      gap: 14px 8px;
+    }
+    .folder-name { font-size: .74rem; }
+
+    dialog.sheet {
+      width: calc(100vw - 16px);
+      padding: 14px;
+      max-height: 88vh;
+    }
+    .group-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 1.2rem; }
+    .icon-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); }
+    .icon-choice { font-size: .95rem; }
+    .setting-label { min-width: 50px; font-size: .7rem; }
+    .setting-hint { font-size: .6rem; }
+    
+    /* 漂浮区自适应高度 */
+    .grid.float-mode { height: auto !important; margin-bottom: 0; }
+    
+    .group-actions button { min-width: 60px; padding: 9px 6px; font-size: .72rem; }
+    .edit-btn { padding: 6px 10px; font-size: .72rem; }
+
+    .toast {
+      top: 8px; left: 8px; right: 8px;
+      max-width: none;
+      transform: translateY(-24px);
+    }
+    .toast.active { transform: translateY(0); }
+
+    html[data-style="magazine"] h1 { font-size: 1.25rem; }
+    html[data-style="sketch"] h1 { font-size: 1.2rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      transition-duration: .01ms !important;
+    }
+    .grid.float-mode .folder-item { will-change: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div>
+      <h1>习惯 &amp; 待办</h1>
+      <div class="date" id="todayLabel"></div>
+    </div>
+    <div class="header-actions">
+      <button type="button" id="styleBtn" title="切换风格" aria-label="切换风格">🎨</button>
+      <button type="button" id="exportBtn" title="导出数据" aria-label="导出数据">⬇</button>
+      <button type="button" id="importBtn" title="导入数据" aria-label="导入数据">⬆</button>
+      <button type="button" id="themeBtn" title="切换主题" aria-label="切换主题">🌙</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="视图切换">
+    <button type="button" class="active" data-view="habit" aria-current="true">习惯</button>
+    <button type="button" data-view="todo">待办</button>
+  </nav>
+
+  <div class="goal-card" aria-label="目标进度">
+    <div class="goal-item" id="goalHabit">
+      <div class="goal-head">
+        <span class="goal-title">🌱 习惯目标</span>
+        <span class="goal-count"><span class="goal-current" id="goalHabitCount">0</span>/10,000</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill" id="goalHabitFill"></div></div>
+    </div>
+    <div class="goal-item" id="goalTodo">
+      <div class="goal-head">
+        <span class="goal-title">✅ 待办目标</span>
+        <span class="goal-count"><span class="goal-current" id="goalTodoCount">0</span>/1,000</span>
+      </div>
+      <div class="goal-bar"><div class="goal-fill todo" id="goalTodoFill"></div></div>
+    </div>
+  </div>
+
+  <div class="layout-bar">
+    <div class="layout-toggle" role="group" aria-label="布局模式">
+      <button type="button" data-layout="grid" class="active" title="网格布局">网格</button>
+      <button type="button" data-layout="float" title="漂浮布局">漂浮</button>
+    </div>
+    <label class="size-slider">
+      <span class="slider-icon" aria-hidden="true">🔍</span>
+      <input type="range" id="sizeRange" min="56" max="150" step="2" value="96" aria-label="全局块大小">
+      <span class="slider-value" id="sizeValue">96</span>
+    </label>
+  </div>
+
+  <section id="panelHabit" aria-label="习惯">
+    <form id="habitGroupForm" autocomplete="off">
+      <input type="text" id="habitGroupInput" maxlength="16" placeholder="新建分组，如：每日轻松做" aria-label="新建习惯分组名称">
+      <button type="submit">添加</button>
+    </form>
+    <div class="grid" id="habitGrid"></div>
+  </section>
+
+  <section id="panelTodo" aria-label="待办" hidden>
+    <form id="todoGroupForm" autocomplete="off">
+      <input type="text" id="todoGroupInput" maxlength="16" placeholder="新建分组，如：工作 / 家务" aria-label="新建待办分组名称">
+      <button type="submit">添加</button>
+    </form>
+    <div class="grid" id="todoGrid"></div>
+  </section>
+</div>
+
+<!-- 习惯弹窗 -->
+<dialog class="sheet" id="habitGroupDialog" aria-label="习惯分组详情">
+  <div class="group-head">
+    <button type="button" class="group-icon" id="hgIcon" title="点击更换图标" aria-label="更换分组图标">📁</button>
+    <input type="text" class="group-title" id="hgName" maxlength="16" placeholder="分组名称" aria-label="分组名称">
+    <button type="button" class="edit-btn" id="hgEditBtn">编辑</button>
+  </div>
+  <div class="icon-picker" id="hgIconPicker" hidden></div>
+
+  <div id="hgEditPanel" hidden>
+    <div class="block-settings">
+      <div class="setting-row">
+        <span class="setting-label">块大小</span>
+        <input type="range" class="setting-range" id="hgSize" min="0.6" max="1.8" step="0.05" value="1" aria-label="该分组的块大小">
+        <span class="setting-value" id="hgSizeVal">1.0×</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">固定位置</span>
+        <button type="button" class="switch" id="hgPin" role="switch" aria-checked="false" aria-label="固定位置">
+          <span class="switch-knob"></span>
+        </button>
+        <span class="setting-hint">漂浮模式下生效</span>
+      </div>
+    </div>
+    <div class="group-actions" style="margin-top: 12px;">
+      <button type="button" class="btn-danger" id="hgDelete">删除分组</button>
+    </div>
+  </div>
+
+  <div id="hgMainPanel">
+    <div class="group-stats" id="hgStats">今日打卡 0 / 0</div>
+    <form id="habitAddForm" autocomplete="off">
+      <input type="text" id="habitAddInput" maxlength="16" placeholder="添加习惯，如：冥想" aria-label="添加习惯">
+      <button type="submit">添加</button>
+    </form>
+    <ul class="sub-list" id="habitList"></ul>
+  </div>
+
+  <div class="group-actions">
+    <button type="button" class="btn-secondary" id="hgClose">关闭</button>
+  </div>
+</dialog>
+
+<!-- 待办弹窗 -->
+<dialog class="sheet" id="todoGroupDialog" aria-label="待办分组详情">
+  <div class="group-head">
+    <button type="button" class="group-icon" id="tgIcon" title="点击更换图标" aria-label="更换分组图标">📋</button>
+    <input type="text" class="group-title" id="tgName" maxlength="16" placeholder="分组名称" aria-label="分组名称">
+    <button type="button" class="edit-btn" id="tgEditBtn">编辑</button>
+  </div>
+  <div class="icon-picker" id="tgIconPicker" hidden></div>
+
+  <div id="tgEditPanel" hidden>
+    <div class="block-settings">
+      <div class="setting-row">
+        <span class="setting-label">块大小</span>
+        <input type="range" class="setting-range" id="tgSize" min="0.6" max="1.8" step="0.05" value="1" aria-label="该分组的块大小">
+        <span class="setting-value" id="tgSizeVal">1.0×</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">固定位置</span>
+        <button type="button" class="switch" id="tgPin" role="switch" aria-checked="false" aria-label="固定位置">
+          <span class="switch-knob"></span>
+        </button>
+        <span class="setting-hint">漂浮模式下生效</span>
+      </div>
+    </div>
+    <div class="group-actions" style="margin-top: 12px;">
+      <button type="button" class="btn-secondary" id="tgClearDone">清除已完成</button>
+      <button type="button" class="btn-danger" id="tgDelete">删除分组</button>
+    </div>
+  </div>
+
+  <div id="tgMainPanel">
+    <div class="group-stats" id="tgStats">暂无待办</div>
+    <form id="todoAddForm" autocomplete="off">
+      <input type="text" id="todoAddInput" maxlength="80" placeholder="添加待办…" aria-label="添加待办">
+      <button type="submit">添加</button>
+    </form>
+    <ul class="sub-list" id="todoList"></ul>
+  </div>
+
+  <div class="group-actions">
+    <button type="button" class="btn-secondary" id="tgClose">关闭</button>
+  </div>
+</dialog>
+
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<input type="file" id="hgImgFile" accept="image/*" hidden>
+<input type="file" id="tgImgFile" accept="image/*" hidden>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastMsg"></span>
+  <button type="button" id="toastUndo">撤销</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const K_HG      = 'ht_hgroups_v2';
+  const K_TG      = 'ht_tgroups_v2';
+  const K_OLD_H   = 'ht_habits_v1';
+  const K_OLD_T   = 'ht_todos_v1';
+  const K_THEME   = 'ht_theme_v1';
+  const K_STYLE   = 'ht_style_v1';
+  const K_VIEW    = 'ht_view_v1';
+  const K_LAYOUT  = 'ht_layout_v1';
+  const K_SIZE    = 'ht_basesize_v1';
+  const K_STATS   = 'ht_stats_v1';
+
+  const GOAL_HABIT = 10000;
+  const GOAL_TODO  = 1000;
+
+  const WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+
+  const STYLES = ['minimal', 'magazine', 'sketch'];
+  const STYLE_META = {
+    minimal:  { icon: '🎨', name: '简约' },
+    magazine: { icon: '📰', name: '杂志感' },
+    sketch:   { icon: '✏️', name: '手绘感' }
+  };
+  const THEME_COLOR = {
+    minimal:  ['#f5f3ee', '#181b20'],
+    magazine: ['#f2efe9', '#0e0e0e'],
+    sketch:   ['#fdf7ea', '#26211c']
+  };
+
+  const ICON_SETS = {
+    habit: ['🌱','💧','🏃','📚','🧘','💪','🌙','🥗','🚴','📝','🎯','💼','🏠','📋','🎨','🎵','☀️','🔥','🍎','😴','🦷','🚿','🧹','💰','📖','✍️','🧠','❤️','🏊','⛰️','🎸','🐾'],
+    todo: ['💼','🏠','🛒','📚','🎯','💡','🎨','🎵','📱','✈️','🏥','📋','💰','📞','📦','🧾','🔧','🚗','🎁','🍽️','🐶','🌐','📅','⭐']
+  };
+
+  const $ = (s, r) => (r || document).querySelector(s);
+
+  let seq = 0;
+  function uid() {
+    seq = (seq + 1) % 1296;
+    return Date.now().toString(36) + seq.toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  function load(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw == null) return fallback;
+      const val = JSON.parse(raw);
+      return (val === null || val === undefined) ? fallback : val;
+    } catch (e) { return fallback; }
+  }
+
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch (e) { console.warn('本地保存失败：', e); return false; }
+  }
+
+  function esc(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function dkey(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function buzz(ms) {
+    try { navigator.vibrate && navigator.vibrate(ms || 8); } catch (e) {}
+  }
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  const isImageIcon = (icon) => typeof icon === 'string' && /^data:image\//.test(icon);
+
+  function iconMarkup(icon) {
+    if (isImageIcon(icon)) return `<img src="${esc(icon)}" alt="">`;
+    return `<span aria-hidden="true">${esc(icon)}</span>`;
+  }
+
+  function setIconEl(el, icon) {
+    if (isImageIcon(icon)) {
+      el.innerHTML = `<img src="${esc(icon)}" alt="">`;
+      el.classList.add('has-image');
+    } else {
+      el.textContent = icon;
+      el.classList.remove('has-image');
+    }
+  }
+
+  function fileToIcon(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || !/^image\//.test(file.type)) return reject(new Error('请选择图片文件'));
+      if (file.size > 10 * 1024 * 1024) return reject(new Error('图片过大，请选择小于 10MB 的图片'));
+
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('读取文件失败'));
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('图片解析失败'));
+        img.onload = () => {
+          try {
+            const MAX = 240;
+            let w = img.naturalWidth || img.width;
+            let h = img.naturalHeight || img.height;
+            if (!w || !h) throw new Error('图片尺寸无效');
+
+            const scale = Math.min(1, MAX / Math.max(w, h));
+            w = Math.max(1, Math.round(w * scale));
+            h = Math.max(1, Math.round(h * scale));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+            let out = canvas.toDataURL('image/webp', 0.85);
+            if (!out.startsWith('data:image/webp')) {
+              const c2 = document.createElement('canvas');
+              c2.width = w; c2.height = h;
+              const ctx2 = c2.getContext('2d');
+              ctx2.fillStyle = '#ffffff';
+              ctx2.fillRect(0, 0, w, h);
+              ctx2.drawImage(img, 0, 0, w, h);
+              out = c2.toDataURL('image/jpeg', 0.85);
+            }
+            if (out.length > 120000) {
+              const c3 = document.createElement('canvas');
+              c3.width = w; c3.height = h;
+              const ctx3 = c3.getContext('2d');
+              ctx3.fillStyle = '#ffffff';
+              ctx3.fillRect(0, 0, w, h);
+              ctx3.drawImage(img, 0, 0, w, h);
+              out = c3.toDataURL('image/jpeg', 0.62);
+            }
+            resolve(out);
+          } catch (err) { reject(err); }
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+  function normalizeHabit(h) {
+    const records = {};
+    if (h && h.records && typeof h.records === 'object') {
+      for (const k of Object.keys(h.records)) {
+        if (DATE_RE.test(k) && h.records[k]) records[k] = true;
+      }
+    }
+    return {
+      id: (h && h.id != null) ? String(h.id) : uid(),
+      name: (h && typeof h.name === 'string' && h.name.trim()) ? h.name : '未命名',
+      records: records
+    };
+  }
+
+  function normalizeTodo(t) {
+    return {
+      id: (t && t.id != null) ? String(t.id) : uid(),
+      text: (t && typeof t.text === 'string') ? t.text : '',
+      done: !!(t && t.done),
+      createdAt: (t && t.createdAt) ? t.createdAt : Date.now()
+    };
+  }
+
+  function normalizeSize(v) {
+    const n = parseFloat(v);
+    if (!isFinite(n)) return 1;
+    return Math.round(clamp(n, 0.6, 1.8) * 20) / 20;
+  }
+
+  function normalizeGroupBase(g, fallbackIcon) {
+    const out = {
+      id: (g && g.id != null) ? String(g.id) : uid(),
+      name: (g && typeof g.name === 'string' && g.name) ? g.name : '未命名',
+      icon: (g && typeof g.icon === 'string' && g.icon) ? g.icon : fallbackIcon,
+      size: normalizeSize(g && g.size),
+      pinned: !!(g && g.pinned)
+    };
+    if (g && typeof g.x === 'number' && isFinite(g.x)) out.x = g.x;
+    if (g && typeof g.y === 'number' && isFinite(g.y)) out.y = g.y;
+    out.vx = 0;
+    out.vy = 0;
+    return out;
+  }
+
+  function normalizeHabitGroup(g) {
+    const o = normalizeGroupBase(g, '📁');
+    o.habits = (g && Array.isArray(g.habits)) ? g.habits.map(normalizeHabit) : [];
+    return o;
+  }
+
+  function normalizeTodoGroup(g) {
+    const o = normalizeGroupBase(g, '📋');
+    o.todos = (g && Array.isArray(g.todos))
+      ? g.todos.map(normalizeTodo).filter(t => t.text)
+      : [];
+    return o;
+  }
+
+  function loadHabitGroups() {
+    const v = load(K_HG, null);
+    if (Array.isArray(v)) return v.map(normalizeHabitGroup);
+    const old = load(K_OLD_H, []);
+    if (Array.isArray(old) && old.length) {
+      const groups = [{
+        id: uid(), name: '我的习惯', icon: '📁', size: 1, pinned: false, vx: 0, vy: 0,
+        habits: old.map(normalizeHabit)
+      }];
+      save(K_HG, groups);
+      return groups;
+    }
+    return [];
+  }
+
+  function loadTodoGroups() {
+    const v = load(K_TG, null);
+    if (Array.isArray(v)) return v.map(normalizeTodoGroup);
+    const old = load(K_OLD_T, []);
+    if (Array.isArray(old) && old.length) {
+      const groups = [{
+        id: uid(), name: '我的待办', icon: '📋', size: 1, pinned: false, vx: 0, vy: 0,
+        todos: old.map(normalizeTodo).filter(t => t.text)
+      }];
+      save(K_TG, groups);
+      return groups;
+    }
+    return [];
+  }
+
+  function loadStats() {
+    const s = load(K_STATS, null);
+    const clean = (v) => (typeof v === 'number' && isFinite(v)) ? Math.max(0, Math.floor(v)) : 0;
+    if (s && typeof s === 'object') {
+      return { habitTotal: clean(s.habitTotal), todoTotal: clean(s.todoTotal) };
+    }
+    return { habitTotal: 0, todoTotal: 0 };
+  }
+
+  let habitGroups = loadHabitGroups();
+  let todoGroups  = loadTodoGroups();
+  let stats       = loadStats();
+
+  const persistHabits = () => save(K_HG, habitGroups);
+  const persistTodos  = () => save(K_TG, todoGroups);
+  const persistStats  = () => save(K_STATS, stats);
+
+  let currentView = 'habit';
+  let layoutMode = load(K_LAYOUT, 'grid') === 'float' ? 'float' : 'grid';
+  let baseSize = clamp(parseInt(load(K_SIZE, 96), 10) || 96, 56, 150);
+
+  const savedStyle = load(K_STYLE, 'minimal');
+  let currentStyle = STYLES.indexOf(savedStyle) >= 0 ? savedStyle : 'minimal';
+
+  const habitGridEl = $('#habitGrid');
+  const todoGridEl  = $('#todoGrid');
+
+  const currentGroups = () => currentView === 'habit' ? habitGroups : todoGroups;
+  const currentGridEl = () => currentView === 'habit' ? habitGridEl : todoGridEl;
+  const currentPersist = () => currentView === 'habit' ? persistHabits : persistTodos;
+  const currentType = () => currentView === 'habit' ? 'habit' : 'todo';
+  const findGroup = (id) => currentGroups().find(g => g.id === id);
+
+  function renderGoals() {
+    const hc = stats.habitTotal;
+    const tc = stats.todoTotal;
+    const hp = Math.min(100, (hc / GOAL_HABIT) * 100);
+    const tp = Math.min(100, (tc / GOAL_TODO) * 100);
+
+    $('#goalHabitCount').textContent = hc.toLocaleString();
+    $('#goalTodoCount').textContent = tc.toLocaleString();
+    $('#goalHabitFill').style.width = hp + '%';
+    $('#goalTodoFill').style.width = tp + '%';
+    $('#goalHabit').classList.toggle('done', hc >= GOAL_HABIT);
+    $('#goalTodo').classList.toggle('done', tc >= GOAL_TODO);
+  }
+
+  function bumpStat(type, delta) {
+    const key = type === 'habit' ? 'habitTotal' : 'todoTotal';
+    const goal = type === 'habit' ? GOAL_HABIT : GOAL_TODO;
+    const prev = stats[key];
+    const next = Math.max(0, prev + delta);
+    if (next === prev) return;
+    stats[key] = next;
+    persistStats();
+    renderGoals();
+
+    if (delta > 0 && prev < goal && next >= goal) {
+      const typeName = type === 'habit' ? '习惯' : '待办';
+      showToast(`🎉 恭喜达成 ${goal.toLocaleString()} 次${typeName}目标！`);
+    }
+  }
+
+  function streak(habit) {
+    const records = habit.records || {};
+    const cursor = new Date();
+    if (!records[dkey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+    let n = 0;
+    while (records[dkey(cursor)]) { n++; cursor.setDate(cursor.getDate() - 1); }
+    return n;
+  }
+
+  function pruneRecords() {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 730);
+    const min = dkey(cutoff);
+    let changed = false;
+    for (const g of habitGroups) {
+      for (const h of g.habits) {
+        for (const k in h.records) {
+          if (k < min) { delete h.records[k]; changed = true; }
+        }
+      }
+    }
+    return changed;
+  }
+
+  const getBlockSize = (g) => baseSize * (g.size || 1);
+
+  function applyBaseSize() {
+    document.documentElement.style.setProperty('--base-size', baseSize + 'px');
+    const sv = $('#sizeValue');
+    if (sv) sv.textContent = baseSize;
+    const range = $('#sizeRange');
+    if (range && +range.value !== baseSize) range.value = baseSize;
+  }
+
+  function createFolderEl(g, withPin) {
+    const el = document.createElement('div');
+    el.className = 'folder-item';
+    el.dataset.id = g.id;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.style.setProperty('--size-factor', g.size || 1);
+
+    el.innerHTML =
+      '<span class="folder-icon-wrap"></span>' +
+      '<span class="folder-name"></span>' +
+      (withPin
+        ? '<button type="button" class="pin-btn" data-act="pin" tabindex="-1" aria-label="固定/取消固定">📌</button>'
+        : '');
+    return el;
+  }
+
+  function fillFolderEl(el, g, badge, allDone, label) {
+    el.classList.toggle('done', allDone);
+    el.classList.toggle('pinned', !!g.pinned);
+    el.setAttribute('aria-label', label);
+    el.style.setProperty('--size-factor', g.size || 1);
+
+    const hasImg = isImageIcon(g.icon);
+    const wrap = el.querySelector('.folder-icon-wrap');
+    wrap.classList.toggle('has-image', hasImg);
+    wrap.innerHTML = iconMarkup(g.icon) +
+      (badge ? `<span class="folder-badge">${esc(badge)}</span>` : '');
+
+    const nameEl = el.querySelector('.folder-name');
+    if (nameEl.textContent !== g.name) nameEl.textContent = g.name;
+  }
+
+  function renderGridMarkup(gridEl, groups, type) {
+    if (groups.length === 0) {
+      gridEl.innerHTML = '<div class="empty">还没有分组，先建一个吧 📁<br>' +
+        (type === 'habit' ? '例如「每日轻松做」' : '例如「工作」「家务」') + '</div>';
+      return;
+    }
+
+    const isHabit = type === 'habit';
+    const today = dkey();
+
+    gridEl.innerHTML = groups.map((g) => {
+      let badge = '', allDone = false, label = '';
+
+      if (isHabit) {
+        const total = g.habits.length;
+        const done = g.habits.filter(h => h.records[today]).length;
+        allDone = total > 0 && done === total;
+        badge = total > 0 ? (allDone ? '✓' : `${done}/${total}`) : '';
+        label = total > 0 ? `${g.name}，今日打卡 ${done} / ${total}` : `${g.name}，暂无习惯`;
+      } else {
+        const total = g.todos.length;
+        const undone = g.todos.filter(t => !t.done).length;
+        allDone = total > 0 && undone === 0;
+        badge = total > 0 ? (allDone ? '✓' : String(undone)) : '';
+        label = total > 0 ? `${g.name}，${undone} 项未完成` : `${g.name}，暂无待办`;
+      }
+
+      const hasImg = isImageIcon(g.icon);
+      return `
+        <div class="folder-item${allDone ? ' done' : ''}${g.pinned ? ' pinned' : ''}"
+             data-id="${esc(g.id)}" role="button" tabindex="0" aria-label="${esc(label)}"
+             style="--size-factor:${g.size || 1}">
+          <span class="folder-icon-wrap${hasImg ? ' has-image' : ''}">
+            ${iconMarkup(g.icon)}
+            ${badge ? `<span class="folder-badge">${esc(badge)}</span>` : ''}
+          </span>
+          <span class="folder-name">${esc(g.name)}</span>
+        </div>`;
+    }).join('');
+  }
+
+  function applyFloatTransform(el, g) {
+    const size = getBlockSize(g);
+    el.style.transform = `translate(${g.x - size / 2}px, ${g.y - size / 2}px)`;
+  }
+
+  function initFloatPos(g, index) {
+    const grid = currentGridEl();
+    const W = grid.clientWidth || 320;
+    const H = grid.clientHeight || 420;
+    const r = getBlockSize(g) / 2;
+
+    const angle = index * 2.39996;
+    const radius = Math.min(W, H) * 0.08 + Math.sqrt(index) * Math.min(W, H) * 0.14;
+
+    g.x = clamp(W / 2 + Math.cos(angle) * radius, r, W - r);
+    g.y = clamp(H / 2 + Math.sin(angle) * radius, r, H - r);
+    const a = Math.random() * Math.PI * 2;
+    const sp = 25 + Math.random() * 35;
+    g.vx = Math.cos(a) * sp;
+    g.vy = Math.sin(a) * sp;
+  }
+
+  function ensurePositions(gridEl, groups) {
+    const W = gridEl.clientWidth || 320;
+    const H = gridEl.clientHeight || 420;
+    groups.forEach((g, i) => {
+      const r = getBlockSize(g) / 2;
+      if (typeof g.x !== 'number' || !isFinite(g.x) || typeof g.y !== 'number' || !isFinite(g.y)) {
+        initFloatPos(g, i);
+      } else {
+        g.x = clamp(g.x, r, Math.max(r, W - r));
+        g.y = clamp(g.y, r, Math.max(r, H - r));
+      }
+    });
+  }
+
+  function renderFloatGrid(gridEl, groups, type) {
+    if (groups.length === 0) {
+      gridEl.innerHTML = '<div class="empty">还没有分组，先建一个吧 📁<br>' +
+        (type === 'habit' ? '例如「每日轻松做」' : '例如「工作」「家务」') + '</div>';
+      return;
+    }
+    if (gridEl.querySelector('.empty')) gridEl.innerHTML = '';
+
+    // 等待浏览器完成布局（确保 flex 高度计算完成）后再渲染
+    requestAnimationFrame(() => {
+      ensurePositions(gridEl, groups);
+
+      const ids = new Set(groups.map(g => g.id));
+      gridEl.querySelectorAll('.folder-item').forEach(el => {
+        if (!ids.has(el.dataset.id)) el.remove();
+      });
+
+      const isHabit = type === 'habit';
+      const today = dkey();
+
+      const existing = new Map();
+      gridEl.querySelectorAll('.folder-item').forEach(el => existing.set(el.dataset.id, el));
+
+      groups.forEach((g) => {
+        let el = existing.get(g.id);
+        if (!el) {
+          el = createFolderEl(g, true);
+          gridEl.appendChild(el);
+        }
+
+        let badge = '', allDone = false, label = '';
+        if (isHabit) {
+          const total = g.habits.length;
+          const done = g.habits.filter(h => h.records[today]).length;
+          allDone = total > 0 && done === total;
+          badge = total > 0 ? (allDone ? '✓' : `${done}/${total}`) : '';
+          label = total > 0 ? `${g.name}，今日打卡 ${done} / ${total}` : `${g.name}，暂无习惯`;
+        } else {
+          const total = g.todos.length;
+          const undone = g.todos.filter(t => !t.done).length;
+          allDone = total > 0 && undone === 0;
+          badge = total > 0 ? (allDone ? '✓' : String(undone)) : '';
+          label = total > 0 ? `${g.name}，${undone} 项未完成` : `${g.name}，暂无待办`;
+        }
+
+        fillFolderEl(el, g, badge, allDone, label);
+        applyFloatTransform(el, g);
+      });
+    });
+  }
+
+  function renderHabitGrid() {
+    if (layoutMode === 'float') renderFloatGrid(habitGridEl, habitGroups, 'habit');
+    else renderGridMarkup(habitGridEl, habitGroups, 'habit');
+  }
+
+  function renderTodoGrid() {
+    if (layoutMode === 'float') renderFloatGrid(todoGridEl, todoGroups, 'todo');
+    else renderGridMarkup(todoGridEl, todoGroups, 'todo');
+  }
+
+  function renderAll() {
+    renderHabitGrid();
+    renderTodoGrid();
+  }
+
+  const physics = { rafId: null, running: false, lastTime: 0, drag: null };
+
+  function startPhysics() {
+    if (physics.running) return;
+    if (layoutMode !== 'float') return;
+    physics.running = true;
+    physics.lastTime = 0;
+    physics.rafId = requestAnimationFrame(physicsLoop);
+  }
+
+  function stopPhysics() {
+    physics.running = false;
+    if (physics.rafId) cancelAnimationFrame(physics.rafId);
+    physics.rafId = null;
+  }
+
+  function updatePhysics() {
+    const dialogOpen = $('#habitGroupDialog').open || $('#todoGroupDialog').open;
+    if (layoutMode === 'float' && !dialogOpen) startPhysics();
+    else stopPhysics();
+  }
+
+  function physicsLoop(now) {
+    if (!physics.running || layoutMode !== 'float') { physics.running = false; return; }
+    if (!physics.lastTime) physics.lastTime = now;
+    let dt = (now - physics.lastTime) / 1000;
+    physics.lastTime = now;
+    dt = Math.min(dt, 0.05);
+
+    stepPhysics(dt);
+    physics.rafId = requestAnimationFrame(physicsLoop);
+  }
+
+  function stepPhysics(dt) {
+    const grid = currentGridEl();
+    if (!grid) return;
+    const W = grid.clientWidth;
+    const H = grid.clientHeight;
+    if (W < 10 || H < 10) return;
+
+    const groups = currentGroups();
+    const drag = physics.drag;
+
+    for (const g of groups) {
+      if (drag && drag.group === g) continue;
+      if (g.pinned) { g.vx = 0; g.vy = 0; continue; }
+
+      const r = getBlockSize(g) / 2;
+      g.x += g.vx * dt;
+      g.y += g.vy * dt;
+
+      if (g.x < r) { g.x = r; g.vx = Math.abs(g.vx) * 0.92; }
+      else if (g.x > W - r) { g.x = W - r; g.vx = -Math.abs(g.vx) * 0.92; }
+      if (g.y < r) { g.y = r; g.vy = Math.abs(g.vy) * 0.92; }
+      else if (g.y > H - r) { g.y = H - r; g.vy = -Math.abs(g.vy) * 0.92; }
+    }
+
+    const dragGroup = drag ? drag.group : null;
+    for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        collide(groups[i], groups[j], dragGroup);
+      }
+    }
+
+    for (const g of groups) {
+      if (g.pinned) continue;
+      if (drag && drag.group === g) continue;
+      const sp = Math.hypot(g.vx, g.vy);
+      if (sp < 12) {
+        const a = Math.random() * Math.PI * 2;
+        const s = 25 + Math.random() * 25;
+        g.vx = Math.cos(a) * s;
+        g.vy = Math.sin(a) * s;
+      } else if (sp > 130) {
+        g.vx = g.vx / sp * 130;
+        g.vy = g.vy / sp * 130;
+      }
+    }
+
+    const elMap = new Map();
+    grid.querySelectorAll('.folder-item').forEach(el => elMap.set(el.dataset.id, el));
+    for (const g of groups) {
+      const el = elMap.get(g.id);
+      if (el) applyFloatTransform(el, g);
+    }
+  }
+
+  function collide(a, b, dragging) {
+    const ra = getBlockSize(a) / 2 * 0.86;
+    const rb = getBlockSize(b) / 2 * 0.86;
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    let dist = Math.hypot(dx, dy);
+    const minD = ra + rb;
+
+    if (dist >= minD) return;
+
+    const aFixed = a.pinned || a === dragging;
+    const bFixed = b.pinned || b === dragging;
+    if (aFixed && bFixed) return;
+
+    if (dist < 0.001) {
+      const ang = Math.random() * Math.PI * 2;
+      if (!aFixed) { a.x -= Math.cos(ang) * 2; a.y -= Math.sin(ang) * 2; }
+      if (!bFixed) { b.x += Math.cos(ang) * 2; b.y += Math.sin(ang) * 2; }
+      return;
+    }
+
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = minD - dist;
+
+    const ma = aFixed ? Infinity : ra;
+    const mb = bFixed ? Infinity : rb;
+
+    let invSum = 0;
+    if (!aFixed) invSum += 1 / ma;
+    if (!bFixed) invSum += 1 / mb;
+    if (invSum === 0) return;
+
+    const pushA = aFixed ? 0 : (1 / ma) / invSum;
+    const pushB = bFixed ? 0 : (1 / mb) / invSum;
+
+    if (!aFixed) { a.x -= nx * overlap * pushA; a.y -= ny * overlap * pushA; }
+    if (!bFixed) { b.x += nx * overlap * pushB; b.y += ny * overlap * pushB; }
+
+    const rvx = b.vx - a.vx;
+    const rvy = b.vy - a.vy;
+    const vn = rvx * nx + rvy * ny;
+    if (vn > 0) return;
+
+    const e = 0.9;
+    const j = -(1 + e) * vn / invSum;
+
+    if (!aFixed) { a.vx -= (j / ma) * nx; a.vy -= (j / ma) * ny; }
+    if (!bFixed) { b.vx += (j / mb) * nx; b.vy += (j / mb) * ny; }
+  }
+
+  function clampAllPositions() {
+    const grid = currentGridEl();
+    if (!grid) return;
+    const W = grid.clientWidth;
+    const H = grid.clientHeight;
+    if (W < 10 || H < 10) return;
+
+    for (const g of currentGroups()) {
+      const r = getBlockSize(g) / 2;
+      if (typeof g.x === 'number' && isFinite(g.x)) {
+        g.x = clamp(g.x, r, Math.max(r, W - r));
+        g.y = clamp(g.y, r, Math.max(r, H - r));
+      }
+    }
+
+    grid.querySelectorAll('.folder-item').forEach(el => {
+      const g = findGroup(el.dataset.id);
+      if (g) applyFloatTransform(el, g);
+    });
+  }
+
+  function onPointerDown(e) {
+    if (layoutMode !== 'float') return;
+    if (e.button !== undefined && e.button !== 0) return;
+
+    const pinBtn = e.target.closest('.pin-btn');
+    if (pinBtn) return;
+
+    const item = e.target.closest('.folder-item');
+    if (!item || !item.dataset.id) return;
+
+    const g = currentGroups().find(x => x.id === item.dataset.id);
+    if (!g) return;
+
+    e.preventDefault();
+
+    try { item.setPointerCapture(e.pointerId); } catch (err) {}
+
+    physics.drag = {
+      group: g,
+      el: item,
+      pointerId: e.pointerId,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startX: g.x,
+      startY: g.y,
+      lastClientX: e.clientX,
+      lastClientY: e.clientY,
+      lastTime: performance.now(),
+      vx: 0,
+      vy: 0,
+      moved: false
+    };
+
+    item.classList.add('dragging');
+  }
+
+  function onPointerMove(e) {
+    const d = physics.drag;
+    if (!d || e.pointerId !== d.pointerId) return;
+
+    const dx = e.clientX - d.startClientX;
+    const dy = e.clientY - d.startClientY;
+
+    if (!d.moved && Math.hypot(dx, dy) < 6) return;
+    d.moved = true;
+
+    const grid = currentGridEl();
+    const W = grid.clientWidth;
+    const H = grid.clientHeight;
+    const r = getBlockSize(d.group) / 2;
+
+    let nx = clamp(d.startX + dx, r, W - r);
+    let ny = clamp(d.startY + dy, r, H - r);
+
+    const now = performance.now();
+    const dt = (now - d.lastTime) / 1000;
+    if (dt > 0.008) {
+      d.vx = (e.clientX - d.lastClientX) / dt;
+      d.vy = (e.clientY - d.lastClientY) / dt;
+      d.lastClientX = e.clientX;
+      d.lastClientY = e.clientY;
+      d.lastTime = now;
+    }
+
+    d.group.x = nx;
+    d.group.y = ny;
+    applyFloatTransform(d.el, d.group);
+  }
+
+  function onPointerUp(e) {
+    const d = physics.drag;
+    if (!d || e.pointerId !== d.pointerId) return;
+
+    try { d.el.releasePointerCapture(e.pointerId); } catch (err) {}
+    d.el.classList.remove('dragging');
+    physics.drag = null;
+
+    if (!d.moved) {
+      openGroupById(d.group.id);
+      return;
+    }
+
+    if (d.group.pinned) {
+      d.group.vx = 0;
+      d.group.vy = 0;
+    } else {
+      const MAX = 420;
+      d.group.vx = clamp(d.vx * 0.42, -MAX, MAX);
+      d.group.vy = clamp(d.vy * 0.42, -MAX, MAX);
+    }
+    currentPersist()();
+  }
+
+  [habitGridEl, todoGridEl].forEach((grid) => {
+    grid.addEventListener('pointerdown', onPointerDown);
+    grid.addEventListener('pointermove', onPointerMove);
+    grid.addEventListener('pointerup', onPointerUp);
+    grid.addEventListener('pointercancel', onPointerUp);
+  });
+
+  function openGroupById(id) {
+    if (currentType() === 'habit') openHabitGroup(id);
+    else openTodoGroup(id);
+  }
+
+  function bindGridActivation(gridEl, type) {
+    gridEl.addEventListener('click', (e) => {
+      const pinBtn = e.target.closest('.pin-btn');
+      if (pinBtn) {
+        e.stopPropagation();
+        const item = pinBtn.closest('.folder-item');
+        if (!item) return;
+        const g = (type === 'habit' ? habitGroups : todoGroups).find(x => x.id === item.dataset.id);
+        if (!g) return;
+        g.pinned = !g.pinned;
+        if (g.pinned) { g.vx = 0; g.vy = 0; }
+        else {
+          const a = Math.random() * Math.PI * 2;
+          const s = 25 + Math.random() * 25;
+          g.vx = Math.cos(a) * s;
+          g.vy = Math.sin(a) * s;
+        }
+        item.classList.toggle('pinned', g.pinned);
+        item.querySelector('.pin-btn').setAttribute('aria-pressed', String(g.pinned));
+        (type === 'habit' ? persistHabits : persistTodos)();
+        showToast(g.pinned ? `已固定「${g.name}」` : `「${g.name}」开始漂浮`);
+        return;
+      }
+
+      if (layoutMode === 'float') return;
+
+      const item = e.target.closest('.folder-item');
+      if (!item || !item.dataset.id) return;
+      if (type === 'habit') openHabitGroup(item.dataset.id);
+      else openTodoGroup(item.dataset.id);
+    });
+
+    gridEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const item = e.target.closest('.folder-item');
+      if (!item || !item.dataset.id) return;
+      e.preventDefault();
+      if (type === 'habit') openHabitGroup(item.dataset.id);
+      else openTodoGroup(item.dataset.id);
+    });
+  }
+
+  bindGridActivation(habitGridEl, 'habit');
+  bindGridActivation(todoGridEl, 'todo');
+
+  /* =====================================================
+     习惯弹窗
+     ===================================================== */
+  let currentHGId = null;
+  const hgDialog = $('#habitGroupDialog');
+  const hgPicker = $('#hgIconPicker');
+  const hgEditBtn = $('#hgEditBtn');
+  const hgEditPanel = $('#hgEditPanel');
+  const hgMainPanel = $('#hgMainPanel');
+
+  function toggleHabitEditMode(isEdit) {
+    hgEditBtn.textContent = isEdit ? '完成' : '编辑';
+    hgEditPanel.hidden = !isEdit;
+    hgMainPanel.hidden = isEdit;
+  }
+
+  hgEditBtn.addEventListener('click', () => {
+    toggleHabitEditMode(hgEditBtn.textContent === '编辑');
+  });
+
+  function openHabitGroup(id) {
+    const g = habitGroups.find(x => x.id === id);
+    if (!g) return;
+    currentHGId = id;
+    setIconEl($('#hgIcon'), g.icon);
+    $('#hgName').value = g.name;
+    hgPicker.hidden = true;
+    syncPickerActive(hgPicker, g.icon);
+    $('#hgSize').value = g.size || 1;
+    $('#hgSizeVal').textContent = (g.size || 1).toFixed(1) + '×';
+    $('#hgPin').setAttribute('aria-checked', String(!!g.pinned));
+    renderHabitList();
+    toggleHabitEditMode(false);
+    if (!hgDialog.open) hgDialog.showModal();
+    updatePhysics();
+  }
+
+  function closeHabitGroup() {
+    if (hgDialog.open) hgDialog.close();
+  }
+
+  hgDialog.addEventListener('close', () => {
+    currentHGId = null;
+    hgPicker.hidden = true;
+    updatePhysics();
+  });
+
+  function renderHabitList() {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    const list = $('#habitList');
+    if (!g) { list.innerHTML = ''; return; }
+
+    const today = dkey();
+
+    if (g.habits.length === 0) {
+      list.innerHTML = '<li class="empty">还没有习惯，添加一个吧 ✨</li>';
+    } else {
+      list.innerHTML = g.habits.map((h) => {
+        const done = !!h.records[today];
+        const s = streak(h);
+        const name = esc(h.name);
+        return `
+          <li class="sub-item" data-id="${esc(h.id)}">
+            <button type="button" class="tick${done ? ' on' : ''}" data-act="toggle"
+                    aria-pressed="${done}" aria-label="${done ? '取消打卡' : '打卡'}：${name}">✓</button>
+            <span class="sub-name${done ? ' done' : ''}">${name}</span>
+            ${s > 0 ? `<span class="sub-meta" title="连续 ${s} 天">🔥 ${s}</span>` : ''}
+            <button type="button" class="sub-del" data-act="del" aria-label="删除 ${name}">✕</button>
+          </li>`;
+      }).join('');
+    }
+
+    const total = g.habits.length;
+    const done = g.habits.filter(h => h.records[today]).length;
+    $('#hgStats').innerHTML = `今日打卡 ${done} / ${total} <span style="font-size:.68rem;color:var(--text-muted);font-weight:normal;margin-left:6px;">(点击条目可直接打卡)</span>`;
+  }
+
+  $('#hgName').addEventListener('input', (e) => {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    g.name = e.target.value;
+    persistHabits();
+    renderHabitGrid();
+  });
+  $('#hgName').addEventListener('change', (e) => {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    g.name = e.target.value.trim() || '未命名';
+    e.target.value = g.name;
+    persistHabits();
+    renderHabitGrid();
+  });
+
+  $('#hgSize').addEventListener('input', (e) => {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    g.size = normalizeSize(e.target.value);
+    $('#hgSizeVal').textContent = g.size.toFixed(1) + '×';
+    persistHabits();
+    renderHabitGrid();
+    if (layoutMode === 'float') clampAllPositions();
+  });
+
+  $('#hgPin').addEventListener('click', () => {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    g.pinned = !g.pinned;
+    $('#hgPin').setAttribute('aria-checked', String(g.pinned));
+    if (g.pinned) { g.vx = 0; g.vy = 0; }
+    else {
+      const a = Math.random() * Math.PI * 2;
+      const s = 25 + Math.random() * 25;
+      g.vx = Math.cos(a) * s;
+      g.vy = Math.sin(a) * s;
+    }
+    persistHabits();
+    renderHabitGrid();
+  });
+
+  $('#hgIcon').addEventListener('click', () => {
+    hgPicker.hidden = !hgPicker.hidden;
+    if (!hgPicker.hidden) {
+      const g = habitGroups.find(x => x.id === currentHGId);
+      if (g) syncPickerActive(hgPicker, g.icon);
+    }
+  });
+
+  hgPicker.addEventListener('click', (e) => {
+    const choice = e.target.closest('.icon-choice');
+    if (choice) {
+      const g = habitGroups.find(x => x.id === currentHGId);
+      if (!g) return;
+      g.icon = choice.dataset.icon;
+      persistHabits();
+      setIconEl($('#hgIcon'), g.icon);
+      hgPicker.hidden = true;
+      renderHabitGrid();
+      return;
+    }
+    if (e.target.closest('.icon-upload')) $('#hgImgFile').click();
+  });
+
+  $('#hgImgFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+
+    fileToIcon(file).then((dataUrl) => {
+      const prev = g.icon;
+      g.icon = dataUrl;
+      if (!persistHabits()) {
+        g.icon = prev;
+        alert('本地存储空间不足，无法保存该图片。请换一张更小的图片，或先删除一些旧数据。');
+        return;
+      }
+      setIconEl($('#hgIcon'), g.icon);
+      hgPicker.hidden = true;
+      renderHabitGrid();
+      showToast('图标已更新');
+    }).catch((err) => {
+      alert('图片处理失败：' + (err && err.message ? err.message : '未知错误'));
+    });
+  });
+
+  $('#habitAddForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    const input = $('#habitAddInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    g.habits.push({ id: uid(), name: name, records: {} });
+    persistHabits();
+    input.value = '';
+    input.focus();
+    renderHabitList();
+    renderHabitGrid();
+  });
+
+  $('#habitList').addEventListener('click', (e) => {
+    const li = e.target.closest('.sub-item');
+    if (!li) return;
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    const idx = g.habits.findIndex(h => h.id === li.dataset.id);
+    if (idx < 0) return;
+    const habit = g.habits[idx];
+
+    if (e.target.closest('.sub-del')) {
+      const gid = g.id;
+      g.habits.splice(idx, 1);
+      persistHabits();
+      renderHabitList();
+      renderHabitGrid();
+      showToast(`已删除「${habit.name}」`, () => {
+        const target = habitGroups.find(x => x.id === gid);
+        if (!target) return;
+        target.habits.splice(Math.min(idx, target.habits.length), 0, habit);
+        persistHabits();
+        renderHabitList();
+        renderHabitGrid();
+      });
+      return;
+    }
+
+    const key = dkey();
+    if (habit.records[key]) {
+      delete habit.records[key];
+      bumpStat('habit', -1);
+    } else {
+      habit.records[key] = true;
+      bumpStat('habit', +1);
+    }
+    persistHabits();
+    renderHabitList();
+    renderHabitGrid();
+    buzz(10);
+  });
+
+  $('#hgDelete').addEventListener('click', () => {
+    const g = habitGroups.find(x => x.id === currentHGId);
+    if (!g) return;
+    const n = g.habits.length;
+    const msg = n > 0
+      ? `删除分组「${g.name}」及其中 ${n} 个习惯？`
+      : `删除分组「${g.name}」？`;
+    if (!confirm(msg)) return;
+    habitGroups = habitGroups.filter(x => x.id !== g.id);
+    persistHabits();
+    closeHabitGroup();
+    renderHabitGrid();
+  });
+
+  $('#hgClose').addEventListener('click', closeHabitGroup);
+
+  /* =====================================================
+     待办弹窗
+     ===================================================== */
+  let currentTGId = null;
+  const tgDialog = $('#todoGroupDialog');
+  const tgPicker = $('#tgIconPicker');
+  const tgEditBtn = $('#tgEditBtn');
+  const tgEditPanel = $('#tgEditPanel');
+  const tgMainPanel = $('#tgMainPanel');
+
+  function toggleTodoEditMode(isEdit) {
+    tgEditBtn.textContent = isEdit ? '完成' : '编辑';
+    tgEditPanel.hidden = !isEdit;
+    tgMainPanel.hidden = isEdit;
+  }
+
+  tgEditBtn.addEventListener('click', () => {
+    toggleTodoEditMode(tgEditBtn.textContent === '编辑');
+  });
+
+  function openTodoGroup(id) {
+    const g = todoGroups.find(x => x.id === id);
+    if (!g) return;
+    currentTGId = id;
+    setIconEl($('#tgIcon'), g.icon);
+    $('#tgName').value = g.name;
+    tgPicker.hidden = true;
+    syncPickerActive(tgPicker, g.icon);
+    $('#tgSize').value = g.size || 1;
+    $('#tgSizeVal').textContent = (g.size || 1).toFixed(1) + '×';
+    $('#tgPin').setAttribute('aria-checked', String(!!g.pinned));
+    renderTodoList();
+    toggleTodoEditMode(false);
+    if (!tgDialog.open) tgDialog.showModal();
+    updatePhysics();
+  }
+
+  function closeTodoGroup() {
+    if (tgDialog.open) tgDialog.close();
+  }
+
+  tgDialog.addEventListener('close', () => {
+    currentTGId = null;
+    tgPicker.hidden = true;
+    updatePhysics();
+  });
+
+  function renderTodoList() {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    const list = $('#todoList');
+    if (!g) { list.innerHTML = ''; return; }
+
+    if (g.todos.length === 0) {
+      list.innerHTML = '<li class="empty">还没有待办，添加一条吧 📝</li>';
+    } else {
+      list.innerHTML = g.todos.map((t) => {
+        const text = esc(t.text);
+        return `
+          <li class="sub-item" data-id="${esc(t.id)}">
+            <button type="button" class="tick${t.done ? ' on' : ''}" data-act="toggle"
+                    aria-pressed="${t.done}" aria-label="${t.done ? '标记为未完成' : '标记为完成'}：${text}">✓</button>
+            <span class="sub-name${t.done ? ' done' : ''}">${text}</span>
+            <button type="button" class="sub-del" data-act="del" aria-label="删除 ${text}">✕</button>
+          </li>`;
+      }).join('');
+    }
+
+    const total = g.todos.length;
+    const undone = g.todos.filter(t => !t.done).length;
+    $('#tgStats').innerHTML = total === 0
+      ? '暂无待办'
+      : `${undone} 项未完成 / 共 ${total} 项 <span style="font-size:.68rem;color:var(--text-muted);font-weight:normal;margin-left:6px;">(点击条目可标记完成)</span>`;
+  }
+
+  $('#tgName').addEventListener('input', (e) => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    g.name = e.target.value;
+    persistTodos();
+    renderTodoGrid();
+  });
+  $('#tgName').addEventListener('change', (e) => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    g.name = e.target.value.trim() || '未命名';
+    e.target.value = g.name;
+    persistTodos();
+    renderTodoGrid();
+  });
+
+  $('#tgSize').addEventListener('input', (e) => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    g.size = normalizeSize(e.target.value);
+    $('#tgSizeVal').textContent = g.size.toFixed(1) + '×';
+    persistTodos();
+    renderTodoGrid();
+    if (layoutMode === 'float') clampAllPositions();
+  });
+
+  $('#tgPin').addEventListener('click', () => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    g.pinned = !g.pinned;
+    $('#tgPin').setAttribute('aria-checked', String(g.pinned));
+    if (g.pinned) { g.vx = 0; g.vy = 0; }
+    else {
+      const a = Math.random() * Math.PI * 2;
+      const s = 25 + Math.random() * 25;
+      g.vx = Math.cos(a) * s;
+      g.vy = Math.sin(a) * s;
+    }
+    persistTodos();
+    renderTodoGrid();
+  });
+
+  $('#tgIcon').addEventListener('click', () => {
+    tgPicker.hidden = !tgPicker.hidden;
+    if (!tgPicker.hidden) {
+      const g = todoGroups.find(x => x.id === currentTGId);
+      if (g) syncPickerActive(tgPicker, g.icon);
+    }
+  });
+
+  tgPicker.addEventListener('click', (e) => {
+    const choice = e.target.closest('.icon-choice');
+    if (choice) {
+      const g = todoGroups.find(x => x.id === currentTGId);
+      if (!g) return;
+      g.icon = choice.dataset.icon;
+      persistTodos();
+      setIconEl($('#tgIcon'), g.icon);
+      tgPicker.hidden = true;
+      renderTodoGrid();
+      return;
+    }
+    if (e.target.closest('.icon-upload')) $('#tgImgFile').click();
+  });
+
+  $('#tgImgFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+
+    fileToIcon(file).then((dataUrl) => {
+      const prev = g.icon;
+      g.icon = dataUrl;
+      if (!persistTodos()) {
+        g.icon = prev;
+        alert('本地存储空间不足，无法保存该图片。请换一张更小的图片，或先删除一些旧数据。');
+        return;
+      }
+      setIconEl($('#tgIcon'), g.icon);
+      tgPicker.hidden = true;
+      renderTodoGrid();
+      showToast('图标已更新');
+    }).catch((err) => {
+      alert('图片处理失败：' + (err && err.message ? err.message : '未知错误'));
+    });
+  });
+
+  $('#todoAddForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    const input = $('#todoAddInput');
+    const text = input.value.trim();
+    if (!text) { input.focus(); return; }
+    g.todos.unshift({ id: uid(), text: text, done: false, createdAt: Date.now() });
+    persistTodos();
+    input.value = '';
+    input.focus();
+    renderTodoList();
+    renderTodoGrid();
+  });
+
+  $('#tgClearDone').addEventListener('click', () => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    const removed = g.todos.filter(t => t.done);
+    if (removed.length === 0) { showToast('没有已完成的待办'); return; }
+    if (!confirm(`确定要删除 ${removed.length} 条已完成的待办吗？`)) return;
+    const backup = g.todos.slice();
+    g.todos = g.todos.filter(t => !t.done);
+    persistTodos();
+    renderTodoList();
+    renderTodoGrid();
+    showToast(`已清除 ${removed.length} 条已完成待办`, () => {
+      g.todos = backup;
+      persistTodos();
+      renderTodoList();
+      renderTodoGrid();
+    });
+  });
+
+  $('#todoList').addEventListener('click', (e) => {
+    const li = e.target.closest('.sub-item');
+    if (!li) return;
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    const idx = g.todos.findIndex(t => t.id === li.dataset.id);
+    if (idx < 0) return;
+    const todo = g.todos[idx];
+
+    if (e.target.closest('.sub-del')) {
+      const gid = g.id;
+      g.todos.splice(idx, 1);
+      persistTodos();
+      renderTodoList();
+      renderTodoGrid();
+      showToast(`已删除「${todo.text}」`, () => {
+        const target = todoGroups.find(x => x.id === gid);
+        if (!target) return;
+        target.todos.splice(Math.min(idx, target.todos.length), 0, todo);
+        persistTodos();
+        renderTodoList();
+        renderTodoGrid();
+      });
+      return;
+    }
+
+    todo.done = !todo.done;
+    bumpStat('todo', todo.done ? +1 : -1);
+    persistTodos();
+    renderTodoList();
+    renderTodoGrid();
+    buzz(8);
+  });
+
+  $('#tgDelete').addEventListener('click', () => {
+    const g = todoGroups.find(x => x.id === currentTGId);
+    if (!g) return;
+    const n = g.todos.length;
+    const msg = n > 0
+      ? `删除分组「${g.name}」及其中 ${n} 条待办？`
+      : `删除分组「${g.name}」？`;
+    if (!confirm(msg)) return;
+    todoGroups = todoGroups.filter(x => x.id !== g.id);
+    persistTodos();
+    closeTodoGroup();
+    renderTodoGrid();
+  });
+
+  $('#tgClose').addEventListener('click', closeTodoGroup);
+
+  /* ---------- 点击遮罩关闭 ---------- */
+  function bindBackdropClose(dialog, closeFn) {
+    dialog.addEventListener('click', (e) => {
+      if (e.target !== dialog) return;
+      const r = dialog.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right &&
+                     e.clientY >= r.top && e.clientY <= r.bottom;
+      if (!inside) closeFn();
+    });
+  }
+  bindBackdropClose(hgDialog, closeHabitGroup);
+  bindBackdropClose(tgDialog, closeTodoGroup);
+
+  /* =====================================================
+     布局切换 & 全局尺寸
+     ===================================================== */
+  function setLayout(mode) {
+    if (mode !== 'float') mode = 'grid';
+    if (layoutMode === mode) return;
+
+    if (physics.drag) {
+      try { physics.drag.el.releasePointerCapture(physics.drag.pointerId); } catch (e) {}
+      physics.drag.el.classList.remove('dragging');
+      physics.drag = null;
+    }
+
+    layoutMode = mode;
+    save(K_LAYOUT, mode);
+
+    document.querySelectorAll('.layout-toggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.layout === mode);
+    });
+
+    habitGridEl.classList.toggle('float-mode', mode === 'float');
+    todoGridEl.classList.toggle('float-mode', mode === 'float');
+
+    renderAll();
+
+    if (mode === 'float') {
+      updatePhysics();
+      showToast('漂浮模式：拖拽可移动，📌 固定位置');
+    } else {
+      stopPhysics();
+    }
+  }
+
+  $('.layout-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-layout]');
+    if (!btn) return;
+    setLayout(btn.dataset.layout);
+  });
+
+  $('#sizeRange').addEventListener('input', (e) => {
+    baseSize = clamp(parseInt(e.target.value, 10) || 96, 56, 150);
+    applyBaseSize();
+    save(K_SIZE, baseSize);
+    renderAll();
+    if (layoutMode === 'float') clampAllPositions();
+  });
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    if (layoutMode !== 'float') return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      clampAllPositions();
+      renderAll();
+    }, 120);
+  });
+
+  $('#habitGroupForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('#habitGroupInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    habitGroups.unshift({
+      id: uid(), name: name, icon: '📁', size: 1, pinned: false,
+      habits: [], vx: 0, vy: 0
+    });
+    persistHabits();
+    input.value = '';
+    input.focus();
+    renderHabitGrid();
+  });
+
+  $('#todoGroupForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = $('#todoGroupInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    todoGroups.unshift({
+      id: uid(), name: name, icon: '📋', size: 1, pinned: false,
+      todos: [], vx: 0, vy: 0
+    });
+    persistTodos();
+    input.value = '';
+    input.focus();
+    renderTodoGrid();
+  });
+
+  let toastTimer = null;
+  let toastUndo = null;
+
+  function showToast(msg, onUndo) {
+    const t = $('#toast');
+    const undoBtn = $('#toastUndo');
+    $('#toastMsg').textContent = msg;
+    undoBtn.hidden = typeof onUndo !== 'function';
+    toastUndo = typeof onUndo === 'function' ? onUndo : null;
+    t.classList.add('active');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(hideToast, 4000);
+  }
+  function hideToast() {
+    clearTimeout(toastTimer);
+    $('#toast').classList.remove('active');
+    toastUndo = null;
+  }
+  $('#toastUndo').addEventListener('click', () => {
+    const fn = toastUndo;
+    hideToast();
+    if (fn) fn();
+  });
+
+  function setView(view) {
+    if (view !== 'todo') view = 'habit';
+    currentView = view;
+
+    $('#panelHabit').hidden = view !== 'habit';
+    $('#panelTodo').hidden = view !== 'todo';
+
+    document.querySelectorAll('#tabs button').forEach((b) => {
+      const on = b.dataset.view === view;
+      b.classList.toggle('active', on);
+      if (on) b.setAttribute('aria-current', 'true');
+      else b.removeAttribute('aria-current');
+    });
+
+    save(K_VIEW, view);
+
+    if (layoutMode === 'float') {
+      const grid = currentGridEl();
+      ensurePositions(grid, currentGroups());
+      renderFloatGrid(grid, currentGroups(), view);
+      updatePhysics();
+    }
+  }
+
+  $('#tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (!btn) return;
+    setView(btn.dataset.view);
+  });
+
+  /* =====================================================
+     主题 / 风格
+     ===================================================== */
+  const mqDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function currentIsDark() {
+    const pref = localStorage.getItem(K_THEME);
+    return pref ? pref === 'dark' : mqDark.matches;
+  }
+
+  function applyThemeColor() {
+    const dark = currentIsDark();
+    const pair = THEME_COLOR[currentStyle] || THEME_COLOR.minimal;
+    const meta = $('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? pair[1] : pair[0]);
+  }
+
+  function applyTheme() {
+    const dark = currentIsDark();
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    const btn = $('#themeBtn');
+    btn.textContent = dark ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', dark ? '切换到浅色主题' : '切换到深色主题');
+    applyThemeColor();
+  }
+
+  function applyStyle(notify) {
+    document.documentElement.dataset.style = currentStyle;
+    const meta = STYLE_META[currentStyle];
+    const btn = $('#styleBtn');
+    if (btn) {
+      btn.textContent = meta.icon;
+      btn.setAttribute('aria-label', '当前风格：' + meta.name + '，点击切换');
+      btn.title = '当前风格：' + meta.name;
+    }
+    applyThemeColor();
+    if (notify) showToast('已切换为「' + meta.name + '」');
+  }
+
+  $('#styleBtn').addEventListener('click', () => {
+    const i = STYLES.indexOf(currentStyle);
+    currentStyle = STYLES[(i + 1) % STYLES.length];
+    save(K_STYLE, currentStyle);
+    applyStyle(true);
+  });
+
+  $('#themeBtn').addEventListener('click', () => {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    localStorage.setItem(K_THEME, isDark ? 'light' : 'dark');
+    applyTheme();
+  });
+
+  const onSchemeChange = () => { if (!localStorage.getItem(K_THEME)) applyTheme(); };
+  if (mqDark.addEventListener) mqDark.addEventListener('change', onSchemeChange);
+  else if (mqDark.addListener) mqDark.addListener(onSchemeChange);
+
+  function buildIconPicker(pickerEl, icons) {
+    pickerEl.innerHTML =
+      '<div class="icon-grid">' +
+        icons.map(ic =>
+          `<button type="button" class="icon-choice" data-icon="${esc(ic)}" aria-label="使用图标 ${esc(ic)}">${esc(ic)}</button>`
+        ).join('') +
+      '</div>' +
+      '<button type="button" class="icon-upload" aria-label="从设备选择图片作为图标">' +
+        '<span aria-hidden="true">🖼️</span> 从设备选择图片' +
+      '</button>';
+  }
+
+  function syncPickerActive(pickerEl, currentIcon) {
+    pickerEl.querySelectorAll('.icon-choice').forEach((b) => {
+      b.classList.toggle('active', b.dataset.icon === currentIcon);
+    });
+  }
+
+  buildIconPicker(hgPicker, ICON_SETS.habit);
+  buildIconPicker(tgPicker, ICON_SETS.todo);
+
+  $('#exportBtn').addEventListener('click', () => {
+    const data = {
+      version: 5,
+      exportedAt: new Date().toISOString(),
+      layout: layoutMode,
+      baseSize: baseSize,
+      style: currentStyle,
+      habitGroups: habitGroups,
+      todoGroups: todoGroups,
+      stats: stats
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'habits-todos-' + dkey() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('已导出备份文件（含累计进度）');
+  });
+
+  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+
+  $('#importFile').addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        let nextHG, nextTG;
+
+        if (Array.isArray(data.habitGroups) && Array.isArray(data.todoGroups)) {
+          nextHG = data.habitGroups.map(normalizeHabitGroup);
+          nextTG = data.todoGroups.map(normalizeTodoGroup);
+        } else if (Array.isArray(data.habits) && Array.isArray(data.todos)) {
+          nextHG = data.habits.length
+            ? [{ id: uid(), name: '我的习惯', icon: '📁', size: 1, pinned: false, habits: data.habits.map(normalizeHabit), vx: 0, vy: 0 }]
+            : [];
+          nextTG = data.todos.length
+            ? [{ id: uid(), name: '我的待办', icon: '📋', size: 1, pinned: false, todos: data.todos.map(normalizeTodo).filter(t => t.text), vx: 0, vy: 0 }]
+            : [];
+        } else {
+          throw new Error('文件格式不正确');
+        }
+
+        if (!confirm('导入将覆盖当前数据，继续？')) return;
+
+        habitGroups = nextHG;
+        todoGroups = nextTG;
+
+        if (data.stats && typeof data.stats === 'object') {
+          const clean = (v) => (typeof v === 'number' && isFinite(v)) ? Math.max(0, Math.floor(v)) : 0;
+          stats.habitTotal = clean(data.stats.habitTotal);
+          stats.todoTotal = clean(data.stats.todoTotal);
+          persistStats();
+          renderGoals();
+        }
+
+        if (typeof data.baseSize === 'number') {
+          baseSize = clamp(parseInt(data.baseSize, 10) || 96, 56, 150);
+          applyBaseSize();
+          save(K_SIZE, baseSize);
+        }
+
+        if (typeof data.style === 'string' && STYLES.indexOf(data.style) >= 0) {
+          currentStyle = data.style;
+          save(K_STYLE, currentStyle);
+          applyStyle(false);
+        }
+
+        const okH = persistHabits();
+        const okT = persistTodos();
+        if (!okH || !okT) {
+          alert('导入的数据过大（可能含较多图片），本地存储空间不足，部分内容可能未保存。');
+        }
+
+        closeHabitGroup();
+        closeTodoGroup();
+        renderAll();
+
+        if (typeof data.layout === 'string') setLayout(data.layout);
+        else if (layoutMode === 'float') updatePhysics();
+
+        showToast('导入成功');
+      } catch (err) {
+        alert('导入失败：' + (err && err.message ? err.message : '未知错误'));
+      }
+    };
+    reader.onerror = () => alert('读取文件失败');
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  function renderDate() {
+    const d = new Date();
+    $('#todayLabel').textContent =
+      d.getFullYear() + ' 年 ' + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日 · ' + WEEK[d.getDay()];
+  }
+
+  let currentDay = dkey();
+  function checkDayRollover() {
+    const k = dkey();
+    if (k === currentDay) return;
+    currentDay = k;
+    renderDate();
+    renderAll();
+    if ($('#habitGroupDialog').open) renderHabitList();
+    if ($('#todoGroupDialog').open) renderTodoList();
+  }
+
+  function init() {
+    applyStyle(false);
+    applyTheme();
+    applyBaseSize();
+    renderDate();
+    renderGoals();
+
+    if (pruneRecords()) persistHabits();
+
+    habitGridEl.classList.toggle('float-mode', layoutMode === 'float');
+    todoGridEl.classList.toggle('float-mode', layoutMode === 'float');
+    document.querySelectorAll('.layout-toggle button').forEach(b => {
+      b.classList.toggle('active', b.dataset.layout === layoutMode);
+    });
+
+    setView(load(K_VIEW, 'habit'));
+    renderAll();
+
+    if (layoutMode === 'float') {
+      updatePhysics();
+    }
+    
+    // 增加一次延迟渲染以确保 Flex 容器高度计算正确（让漂浮区完美铺满）
+    setTimeout(() => {
+      renderAll();
+      if (layoutMode === 'float') {
+        clampAllPositions();
+      }
+    }, 100);
+
+    setInterval(checkDayRollover, 60000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkDayRollover();
+        if (layoutMode === 'float') {
+          physics.lastTime = 0;
+          updatePhysics();
+        }
+      }
+    });
+  }
+
+  init();
+})();
+</script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker 注册成功！', reg))
+          .catch(err => console.log('PWA Service Worker 注册失败：', err));
+      });
+    }
+  </script>
+</body>
+</html>
