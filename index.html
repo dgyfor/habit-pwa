@@ -2067,25 +2067,110 @@
 
   const WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
 
-  const STYLES = ['minimal', 'magazine', 'sketch'];
-  const STYLE_META = {
-    minimal:  { icon: '🎨', name: '简约' },
-    magazine: { icon: '📰', name: '杂志感' },
-    sketch:   { icon: '✏️', name: '手绘感' }
-  };
-  const THEME_COLOR = {
-    minimal:  ['#f5f3ee', '#181b20'],
-    magazine: ['#f2efe9', '#0e0e0e'],
-    sketch:   ['#fdf7ea', '#26211c']
-  };
+  /* ============================================================
+     ★ 存储层加固：配额守卫 + 防抖写入
+     ============================================================ */
+  const SOFT_LIMIT_CHARS = 1_800_000;  // 约 3.6MB（UTF-16），留出安全余量
+  let quotaWarned = false;
 
-  const ICON_SETS = {
-    habit: ['🌱','💧','🏃','📚','🧘','💪','🌙','🥗','🚴','📝','🎯','💼','🏠','📋','🎨','🎵','☀️','🔥','🍎','😴','🦷','🚿','🧹','💰','📖','✍️','🧠','❤️','🏊','⛰️','🎸','🐾'],
-    todo: ['💼','🏠','🛒','📚','🎯','💡','🎨','🎵','📱','✈️','🏥','📋','💰','📞','📦','🧾','🔧','🚗','🎁','🍽️','🐶','🌐','📅','⭐']
-  };
+  // ★ TDZ 修复：提前声明 toast 状态，避免 save() 在早期调用 showToast() 时踩 TDZ
+  let toastTimer = null;
+  let toastUndo = null;
 
-  const $ = (s, r) => (r || document).querySelector(s);
+  function save(key, value) {
+    let json;
+    try {
+      json = JSON.stringify(value);
+    } catch (e) {
+      console.warn('[store] 序列化失败：', e);
+      return false;
+    }
 
+    if (json.length > SOFT_LIMIT_CHARS) {
+      console.warn('[store] 数据体积超限：', (json.length * 2 / 1048576).toFixed(2), 'MB');
+      if (!quotaWarned) {
+        quotaWarned = true;
+        setTimeout(() => { quotaWarned = false; }, 10000);
+        showToast('⚠️ 本地数据接近上限，请点 ⬇ 导出备份后清理旧记录');
+      }
+      return false;
+    }
+
+    try {
+      localStorage.setItem(key, json);
+      return true;
+    } catch (e) {
+      const isQuota = e && (e.name === 'QuotaExceededError' ||
+                            e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+                            e.code === 22 || e.code === 1014);
+      if (isQuota) {
+        console.warn('[store] localStorage 配额已满');
+        if (!quotaWarned) {
+          quotaWarned = true;
+          setTimeout(() => { quotaWarned = false; }, 10000);
+          showToast('⚠️ 本地存储已满，请导出备份后清理数据');
+        }
+      } else {
+        console.warn('[store] 本地保存失败：', e);
+      }
+      return false;
+    }
+  }
+
+  // 所有持久化写入都走这里：合并 350ms 内的多次变更，避免每按一键就全量 stringify
+  const persisters = [];
+  function makePersister(key, getData) {
+    let timer = null;
+    let pending = false;
+
+    function flush() {
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (!pending) return;
+      pending = false;
+      save(key, getData());
+    }
+
+    function schedule() {
+      pending = true;
+      if (timer) return;
+      timer = setTimeout(flush, 350);
+    }
+
+    schedule.flush = flush;
+    persisters.push(schedule);
+    return schedule;
+  }
+
+  function flushAllPersisters() {
+    for (const p of persisters) p.flush();
+  }
+
+  window.addEventListener('beforeunload', flushAllPersisters);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushAllPersisters();
+  });
+
+  /* ============================================================
+     ★ 紧凑日期编码：'YYYY-MM-DD' <-> 天数序号
+     旧格式： "2024-01-15":true,  ≈ 21 字符
+     新格式： 19737,              ≈  6 字符（体积降到约 1/3.5）
+     ============================================================ */
+  const DAY_MS = 86400000;
+  const EPOCH_UTC = Date.UTC(1970, 0, 1);
+
+  function dayKeyToNum(key) {
+    const y = +key.slice(0, 4), m = +key.slice(5, 7), d = +key.slice(8, 10);
+    return Math.round((Date.UTC(y, m - 1, d) - EPOCH_UTC) / DAY_MS);
+  }
+
+  function dayNumToKey(n) {
+    const dt = new Date(EPOCH_UTC + n * DAY_MS);
+    return dt.getUTCFullYear() + '-' +
+      String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' +
+      String(dt.getUTCDate()).padStart(2, '0');
+  }
+
+  /* ---------- 基础工具 ---------- */
   let seq = 0;
   function uid() {
     seq = (seq + 1) % 1296;
@@ -2101,23 +2186,18 @@
     } catch (e) { return fallback; }
   }
 
-  function save(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-    catch (e) { console.warn('本地保存失败：', e); return false; }
-  }
-
   function esc(str) {
     return String(str).replace(/[&<>"']/g, (c) => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
   }
 
-  function dkey(d) {
+  const dkey = (d) => {
     d = d || new Date();
     return d.getFullYear() + '-' +
       String(d.getMonth() + 1).padStart(2, '0') + '-' +
       String(d.getDate()).padStart(2, '0');
-  }
+  };
 
   function buzz(ms) {
     try { navigator.vibrate && navigator.vibrate(ms || 8); } catch (e) {}
@@ -2154,7 +2234,7 @@
         img.onerror = () => reject(new Error('图片解析失败'));
         img.onload = () => {
           try {
-            const MAX = 240;
+            const MAX = 96;
             let w = img.naturalWidth || img.width;
             let h = img.naturalHeight || img.height;
             if (!w || !h) throw new Error('图片尺寸无效');
@@ -2165,26 +2245,20 @@
 
             const canvas = document.createElement('canvas');
             canvas.width = w; canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
 
-            let out = canvas.toDataURL('image/webp', 0.85);
+            // 先试 webp
+            let out = canvas.toDataURL('image/webp', 0.5);
             if (!out.startsWith('data:image/webp')) {
-              const c2 = document.createElement('canvas');
-              c2.width = w; c2.height = h;
-              const ctx2 = c2.getContext('2d');
-              ctx2.fillStyle = '#ffffff';
-              ctx2.fillRect(0, 0, w, h);
-              ctx2.drawImage(img, 0, 0, w, h);
-              out = c2.toDataURL('image/jpeg', 0.85);
+              out = canvas.toDataURL('image/jpeg', 0.5);
             }
-            if (out.length > 120000) {
-              const c3 = document.createElement('canvas');
-              c3.width = w; c3.height = h;
-              const ctx3 = c3.getContext('2d');
-              ctx3.fillStyle = '#ffffff';
-              ctx3.fillRect(0, 0, w, h);
-              ctx3.drawImage(img, 0, 0, w, h);
-              out = c3.toDataURL('image/jpeg', 0.62);
+            // 若仍偏大，逐步降质
+            if (out.length > 60000) {
+              out = canvas.toDataURL('image/jpeg', 0.35);
+            }
+            if (out.length > 60000) {
+              out = canvas.toDataURL('image/jpeg', 0.25);
             }
             resolve(out);
           } catch (err) { reject(err); }
@@ -2195,20 +2269,46 @@
     });
   }
 
+  /* ============================================================
+     数据模型
+     习惯：{ id, name, days: Set<number> }   // days 为天数序号集合
+     ============================================================ */
   const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+  function attachHabitToJSON(h) {
+    Object.defineProperty(h, 'toJSON', {
+      value: function () {
+        return {
+          id: this.id,
+          name: this.name,
+          d: Array.from(this.days).sort((a, b) => a - b)
+        };
+      },
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+    return h;
+  }
+
   function normalizeHabit(h) {
-    const records = {};
-    if (h && h.records && typeof h.records === 'object') {
+    let days;
+    if (h && Array.isArray(h.d)) {
+      days = new Set(h.d.filter(Number.isInteger));
+    } else if (h && h.records && typeof h.records === 'object') {
+      // 兼容旧版 {"2024-01-15": true} 格式
+      days = new Set();
       for (const k of Object.keys(h.records)) {
-        if (DATE_RE.test(k) && h.records[k]) records[k] = true;
+        if (DATE_RE.test(k) && h.records[k]) days.add(dayKeyToNum(k));
       }
+    } else {
+      days = new Set();
     }
-    return {
+    return attachHabitToJSON({
       id: (h && h.id != null) ? String(h.id) : uid(),
       name: (h && typeof h.name === 'string' && h.name.trim()) ? h.name : '未命名',
-      records: records
-    };
+      days: days
+    });
   }
 
   function normalizeTodo(t) {
@@ -2298,16 +2398,14 @@
   let todoGroups  = loadTodoGroups();
   let stats       = loadStats();
 
-  const persistHabits = () => save(K_HG, habitGroups);
-  const persistTodos  = () => save(K_TG, todoGroups);
-  const persistStats  = () => save(K_STATS, stats);
+  // 首次加载若迁移过旧格式，立刻落盘一次（紧凑格式）
+  const persistHabits = makePersister(K_HG, () => habitGroups);
+  const persistTodos  = makePersister(K_TG, () => todoGroups);
+  const persistStats  = makePersister(K_STATS, () => stats);
 
   let currentView = 'habit';
   let layoutMode = load(K_LAYOUT, 'grid') === 'float' ? 'float' : 'grid';
   let baseSize = clamp(parseInt(load(K_SIZE, 96), 10) || 96, 56, 150);
-
-  const savedStyle = load(K_STYLE, 'minimal');
-  let currentStyle = STYLES.indexOf(savedStyle) >= 0 ? savedStyle : 'minimal';
 
   const habitGridEl = $('#habitGrid');
   const todoGridEl  = $('#todoGrid');
@@ -2318,6 +2416,9 @@
   const currentType = () => currentView === 'habit' ? 'habit' : 'todo';
   const findGroup = (id) => currentGroups().find(g => g.id === id);
 
+  function $(s, r) { return (r || document).querySelector(s); }
+
+  /* ---------- 目标进度 ---------- */
   function renderGoals() {
     const hc = stats.habitTotal;
     const tc = stats.todoTotal;
@@ -2348,24 +2449,25 @@
     }
   }
 
+  /* ---------- 连续天数（基于 Set<number>） ---------- */
   function streak(habit) {
-    const records = habit.records || {};
-    const cursor = new Date();
-    if (!records[dkey(cursor)]) cursor.setDate(cursor.getDate() - 1);
+    const today = dayKeyToNum(dkey());
+    let cursor = habit.days.has(today) ? today : today - 1;
     let n = 0;
-    while (records[dkey(cursor)]) { n++; cursor.setDate(cursor.getDate() - 1); }
+    while (habit.days.has(cursor)) { n++; cursor--; }
     return n;
   }
 
-  function pruneRecords() {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 730);
-    const min = dkey(cutoff);
+  /* ---------- 记录裁剪 ---------- */
+  function pruneRecords(maxDays) {
+    maxDays = maxDays || 730;
+    const cutoff = dayKeyToNum(dkey()) - maxDays;
     let changed = false;
     for (const g of habitGroups) {
       for (const h of g.habits) {
-        for (const k in h.records) {
-          if (k < min) { delete h.records[k]; changed = true; }
+        if (!h.days || h.days.size === 0) continue;
+        for (const n of h.days) {
+          if (n < cutoff) { h.days.delete(n); changed = true; }
         }
       }
     }
@@ -2382,6 +2484,7 @@
     if (range && +range.value !== baseSize) range.value = baseSize;
   }
 
+  /* ---------- 渲染 ---------- */
   function createFolderEl(g, withPin) {
     const el = document.createElement('div');
     el.className = 'folder-item';
@@ -2415,6 +2518,27 @@
     if (nameEl.textContent !== g.name) nameEl.textContent = g.name;
   }
 
+  function groupBadgeInfo(g, type, todayNum) {
+    if (type === 'habit') {
+      const total = g.habits.length;
+      const done = g.habits.filter(h => h.days.has(todayNum)).length;
+      const allDone = total > 0 && done === total;
+      return {
+        badge: total > 0 ? (allDone ? '✓' : `${done}/${total}`) : '',
+        allDone,
+        label: total > 0 ? `${g.name}，今日打卡 ${done} / ${total}` : `${g.name}，暂无习惯`
+      };
+    }
+    const total = g.todos.length;
+    const undone = g.todos.filter(t => !t.done).length;
+    const allDone = total > 0 && undone === 0;
+    return {
+      badge: total > 0 ? (allDone ? '✓' : String(undone)) : '',
+      allDone,
+      label: total > 0 ? `${g.name}，${undone} 项未完成` : `${g.name}，暂无待办`
+    };
+  }
+
   function renderGridMarkup(gridEl, groups, type) {
     if (groups.length === 0) {
       gridEl.innerHTML = '<div class="empty">还没有分组，先建一个吧 📁<br>' +
@@ -2422,34 +2546,18 @@
       return;
     }
 
-    const isHabit = type === 'habit';
-    const today = dkey();
+    const todayNum = dayKeyToNum(dkey());
 
     gridEl.innerHTML = groups.map((g) => {
-      let badge = '', allDone = false, label = '';
-
-      if (isHabit) {
-        const total = g.habits.length;
-        const done = g.habits.filter(h => h.records[today]).length;
-        allDone = total > 0 && done === total;
-        badge = total > 0 ? (allDone ? '✓' : `${done}/${total}`) : '';
-        label = total > 0 ? `${g.name}，今日打卡 ${done} / ${total}` : `${g.name}，暂无习惯`;
-      } else {
-        const total = g.todos.length;
-        const undone = g.todos.filter(t => !t.done).length;
-        allDone = total > 0 && undone === 0;
-        badge = total > 0 ? (allDone ? '✓' : String(undone)) : '';
-        label = total > 0 ? `${g.name}，${undone} 项未完成` : `${g.name}，暂无待办`;
-      }
-
+      const info = groupBadgeInfo(g, type, todayNum);
       const hasImg = isImageIcon(g.icon);
       return `
-        <div class="folder-item${allDone ? ' done' : ''}${g.pinned ? ' pinned' : ''}"
-             data-id="${esc(g.id)}" role="button" tabindex="0" aria-label="${esc(label)}"
+        <div class="folder-item${info.allDone ? ' done' : ''}${g.pinned ? ' pinned' : ''}"
+             data-id="${esc(g.id)}" role="button" tabindex="0" aria-label="${esc(info.label)}"
              style="--size-factor:${g.size || 1}">
           <span class="folder-icon-wrap${hasImg ? ' has-image' : ''}">
             ${iconMarkup(g.icon)}
-            ${badge ? `<span class="folder-badge">${esc(badge)}</span>` : ''}
+            ${info.badge ? `<span class="folder-badge">${esc(info.badge)}</span>` : ''}
           </span>
           <span class="folder-name">${esc(g.name)}</span>
         </div>`;
@@ -2500,7 +2608,6 @@
     }
     if (gridEl.querySelector('.empty')) gridEl.innerHTML = '';
 
-    // 等待浏览器完成布局（确保 flex 高度计算完成）后再渲染
     requestAnimationFrame(() => {
       ensurePositions(gridEl, groups);
 
@@ -2509,9 +2616,7 @@
         if (!ids.has(el.dataset.id)) el.remove();
       });
 
-      const isHabit = type === 'habit';
-      const today = dkey();
-
+      const todayNum = dayKeyToNum(dkey());
       const existing = new Map();
       gridEl.querySelectorAll('.folder-item').forEach(el => existing.set(el.dataset.id, el));
 
@@ -2521,23 +2626,8 @@
           el = createFolderEl(g, true);
           gridEl.appendChild(el);
         }
-
-        let badge = '', allDone = false, label = '';
-        if (isHabit) {
-          const total = g.habits.length;
-          const done = g.habits.filter(h => h.records[today]).length;
-          allDone = total > 0 && done === total;
-          badge = total > 0 ? (allDone ? '✓' : `${done}/${total}`) : '';
-          label = total > 0 ? `${g.name}，今日打卡 ${done} / ${total}` : `${g.name}，暂无习惯`;
-        } else {
-          const total = g.todos.length;
-          const undone = g.todos.filter(t => !t.done).length;
-          allDone = total > 0 && undone === 0;
-          badge = total > 0 ? (allDone ? '✓' : String(undone)) : '';
-          label = total > 0 ? `${g.name}，${undone} 项未完成` : `${g.name}，暂无待办`;
-        }
-
-        fillFolderEl(el, g, badge, allDone, label);
+        const info = groupBadgeInfo(g, type, todayNum);
+        fillFolderEl(el, g, info.badge, info.allDone, info.label);
         applyFloatTransform(el, g);
       });
     });
@@ -2558,6 +2648,7 @@
     renderTodoGrid();
   }
 
+  /* ---------- 物理引擎 ---------- */
   const physics = { rafId: null, running: false, lastTime: 0, drag: null };
 
   function startPhysics() {
@@ -2717,6 +2808,7 @@
     });
   }
 
+  /* ---------- 拖拽 ---------- */
   function onPointerDown(e) {
     if (layoutMode !== 'float') return;
     if (e.button !== undefined && e.button !== 0) return;
@@ -2768,8 +2860,8 @@
     const H = grid.clientHeight;
     const r = getBlockSize(d.group) / 2;
 
-    let nx = clamp(d.startX + dx, r, W - r);
-    let ny = clamp(d.startY + dy, r, H - r);
+    const nx = clamp(d.startX + dx, r, W - r);
+    const ny = clamp(d.startY + dy, r, H - r);
 
     const now = performance.now();
     const dt = (now - d.lastTime) / 1000;
@@ -2919,13 +3011,13 @@
     const list = $('#habitList');
     if (!g) { list.innerHTML = ''; return; }
 
-    const today = dkey();
+    const todayNum = dayKeyToNum(dkey());
 
     if (g.habits.length === 0) {
       list.innerHTML = '<li class="empty">还没有习惯，添加一个吧 ✨</li>';
     } else {
       list.innerHTML = g.habits.map((h) => {
-        const done = !!h.records[today];
+        const done = h.days.has(todayNum);
         const s = streak(h);
         const name = esc(h.name);
         return `
@@ -2940,16 +3032,18 @@
     }
 
     const total = g.habits.length;
-    const done = g.habits.filter(h => h.records[today]).length;
+    const done = g.habits.filter(h => h.days.has(todayNum)).length;
     $('#hgStats').innerHTML = `今日打卡 ${done} / ${total} <span style="font-size:.68rem;color:var(--text-muted);font-weight:normal;margin-left:6px;">(点击条目可直接打卡)</span>`;
   }
 
+  // 输入时只更新内存 + 网格文本，不触发整块重绘，写入走防抖
   $('#hgName').addEventListener('input', (e) => {
     const g = habitGroups.find(x => x.id === currentHGId);
     if (!g) return;
     g.name = e.target.value;
     persistHabits();
-    renderHabitGrid();
+    const el = currentGridEl().querySelector(`.folder-item[data-id="${CSS.escape(g.id)}"] .folder-name`);
+    if (el) el.textContent = g.name;
   });
   $('#hgName').addEventListener('change', (e) => {
     const g = habitGroups.find(x => x.id === currentHGId);
@@ -3019,7 +3113,7 @@
     fileToIcon(file).then((dataUrl) => {
       const prev = g.icon;
       g.icon = dataUrl;
-      if (!persistHabits()) {
+      if (!save(K_HG, habitGroups)) {
         g.icon = prev;
         alert('本地存储空间不足，无法保存该图片。请换一张更小的图片，或先删除一些旧数据。');
         return;
@@ -3040,7 +3134,7 @@
     const input = $('#habitAddInput');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
-    g.habits.push({ id: uid(), name: name, records: {} });
+    g.habits.push(normalizeHabit({ id: uid(), name: name }));
     persistHabits();
     input.value = '';
     input.focus();
@@ -3074,12 +3168,12 @@
       return;
     }
 
-    const key = dkey();
-    if (habit.records[key]) {
-      delete habit.records[key];
+    const todayNum = dayKeyToNum(dkey());
+    if (habit.days.has(todayNum)) {
+      habit.days.delete(todayNum);
       bumpStat('habit', -1);
     } else {
-      habit.records[key] = true;
+      habit.days.add(todayNum);
       bumpStat('habit', +1);
     }
     persistHabits();
@@ -3183,7 +3277,8 @@
     if (!g) return;
     g.name = e.target.value;
     persistTodos();
-    renderTodoGrid();
+    const el = currentGridEl().querySelector(`.folder-item[data-id="${CSS.escape(g.id)}"] .folder-name`);
+    if (el) el.textContent = g.name;
   });
   $('#tgName').addEventListener('change', (e) => {
     const g = todoGroups.find(x => x.id === currentTGId);
@@ -3253,7 +3348,7 @@
     fileToIcon(file).then((dataUrl) => {
       const prev = g.icon;
       g.icon = dataUrl;
-      if (!persistTodos()) {
+      if (!save(K_TG, todoGroups)) {
         g.icon = prev;
         alert('本地存储空间不足，无法保存该图片。请换一张更小的图片，或先删除一些旧数据。');
         return;
@@ -3451,9 +3546,8 @@
     renderTodoGrid();
   });
 
-  let toastTimer = null;
-  let toastUndo = null;
-
+  /* ---------- Toast ---------- */
+  // 注：toastTimer / toastUndo 已在文件顶部声明（TDZ 修复），此处不再重复声明
   function showToast(msg, onUndo) {
     const t = $('#toast');
     const undoBtn = $('#toastUndo');
@@ -3475,6 +3569,7 @@
     if (fn) fn();
   });
 
+  /* ---------- 视图切换 ---------- */
   function setView(view) {
     if (view !== 'todo') view = 'habit';
     currentView = view;
@@ -3544,6 +3639,25 @@
     if (notify) showToast('已切换为「' + meta.name + '」');
   }
 
+  const STYLES = ['minimal', 'magazine', 'sketch'];
+  const STYLE_META = {
+    minimal:  { icon: '🎨', name: '简约' },
+    magazine: { icon: '📰', name: '杂志感' },
+    sketch:   { icon: '✏️', name: '手绘感' }
+  };
+  const THEME_COLOR = {
+    minimal:  ['#f5f3ee', '#181b20'],
+    magazine: ['#f2efe9', '#0e0e0e'],
+    sketch:   ['#fdf7ea', '#26211c']
+  };
+  const ICON_SETS = {
+    habit: ['🌱','💧','🏃','📚','🧘','💪','🌙','🥗','🚴','📝','🎯','💼','🏠','📋','🎨','🎵','☀️','🔥','🍎','😴','🦷','🚿','🧹','💰','📖','✍️','🧠','❤️','🏊','⛰️','🎸','🐾'],
+    todo: ['💼','🏠','🛒','📚','🎯','💡','🎨','🎵','📱','✈️','🏥','📋','💰','📞','📦','🧾','🔧','🚗','🎁','🍽️','🐶','🌐','📅','⭐']
+  };
+
+  const savedStyle = load(K_STYLE, 'minimal');
+  let currentStyle = STYLES.indexOf(savedStyle) >= 0 ? savedStyle : 'minimal';
+
   $('#styleBtn').addEventListener('click', () => {
     const i = STYLES.indexOf(currentStyle);
     currentStyle = STYLES[(i + 1) % STYLES.length];
@@ -3579,17 +3693,21 @@
     });
   }
 
-  buildIconPicker(hgPicker, ICON_SETS.habit);
-  buildIconPicker(tgPicker, ICON_SETS.todo);
+  buildIconPicker($('#hgIconPicker'), ICON_SETS.habit);
+  buildIconPicker($('#tgIconPicker'), ICON_SETS.todo);
 
+  /* =====================================================
+     导出 / 导入
+     ===================================================== */
   $('#exportBtn').addEventListener('click', () => {
+    flushAllPersisters();
     const data = {
-      version: 5,
+      version: 6,
       exportedAt: new Date().toISOString(),
       layout: layoutMode,
       baseSize: baseSize,
       style: currentStyle,
-      habitGroups: habitGroups,
+      habitGroups: habitGroups,   // 习惯的 toJSON 会自动输出紧凑的 d 数组
       todoGroups: todoGroups,
       stats: stats
     };
@@ -3656,8 +3774,8 @@
           applyStyle(false);
         }
 
-        const okH = persistHabits();
-        const okT = persistTodos();
+        const okH = save(K_HG, habitGroups);
+        const okT = save(K_TG, todoGroups);
         if (!okH || !okT) {
           alert('导入的数据过大（可能含较多图片），本地存储空间不足，部分内容可能未保存。');
         }
@@ -3679,6 +3797,9 @@
     e.target.value = '';
   });
 
+  /* =====================================================
+     日期显示 & 跨日刷新
+     ===================================================== */
   function renderDate() {
     const d = new Date();
     $('#todayLabel').textContent =
@@ -3696,6 +3817,9 @@
     if ($('#todoGroupDialog').open) renderTodoList();
   }
 
+  /* =====================================================
+     启动
+     ===================================================== */
   function init() {
     applyStyle(false);
     applyTheme();
@@ -3703,7 +3827,18 @@
     renderDate();
     renderGoals();
 
-    if (pruneRecords()) persistHabits();
+    // 首次加载时做一次记录裁剪；若发生迁移则立刻落盘紧凑格式
+    let migrated = false;
+    const raw = load(K_HG, null);
+    if (Array.isArray(raw)) {
+      for (const g of raw) {
+        if (!g || !Array.isArray(g.habits)) continue;
+        for (const h of g.habits) {
+          if (h && h.records && !h.d) migrated = true;
+        }
+      }
+    }
+    if (pruneRecords() || migrated) persistHabits();
 
     habitGridEl.classList.toggle('float-mode', layoutMode === 'float');
     todoGridEl.classList.toggle('float-mode', layoutMode === 'float');
@@ -3717,8 +3852,7 @@
     if (layoutMode === 'float') {
       updatePhysics();
     }
-    
-    // 增加一次延迟渲染以确保 Flex 容器高度计算正确（让漂浮区完美铺满）
+
     setTimeout(() => {
       renderAll();
       if (layoutMode === 'float') {
@@ -3734,21 +3868,108 @@
           physics.lastTime = 0;
           updatePhysics();
         }
+      } else {
+        flushAllPersisters();
       }
     });
   }
 
   init();
 })();
-</script>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('PWA Service Worker 注册成功！', reg))
-          .catch(err => console.log('PWA Service Worker 注册失败：', err));
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          console.log('[PWA] SW 注册成功：', reg.scope);
+
+          // 场景 1：页面打开时，已经有 waiting 的新版本
+          if (reg.waiting) {
+            showUpdatePrompt(reg);
+          }
+
+          // 场景 2：监听新版本安装完成
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdatePrompt(reg);
+              }
+            });
+          });
+
+          // 每次启动主动查一次更新
+          reg.update().catch(() => {});
+        })
+        .catch((err) => console.warn('[PWA] SW 注册失败：', err));
+
+      // 新 SW 接管页面时，自动刷新一次（避免死循环）
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
       });
-    }
+    });
+  }
+
+  /* ---------- 更新提示条 ---------- */
+  function showUpdatePrompt(reg) {
+    if (document.getElementById('swUpdateBar')) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'swUpdateBar';
+    bar.innerHTML = `
+      <span>🚀 发现新版本，点击刷新获取最新功能</span>
+      <button type="button" id="swUpdateBtn">立即刷新</button>
+    `;
+
+    Object.assign(bar.style, {
+      position: 'fixed',
+      left: '50%',
+      bottom: '20px',
+      transform: 'translateX(-50%)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      padding: '12px 16px',
+      background: 'var(--card-bg, #fff)',
+      color: 'var(--text, #333)',
+      border: '1px solid var(--card-border, #ddd)',
+      borderLeft: '4px solid var(--accent, #4a9e8a)',
+      borderRadius: '10px',
+      boxShadow: '0 8px 28px rgba(0,0,0,.18)',
+      fontSize: '.85rem',
+      zIndex: '9999',
+      maxWidth: 'calc(100vw - 32px)'
+    });
+
+    const btn = bar.querySelector('#swUpdateBtn');
+    Object.assign(btn.style, {
+      padding: '6px 12px',
+      background: 'var(--accent, #4a9e8a)',
+      color: '#fff',
+      border: '0',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '.8rem',
+      fontWeight: '600',
+      flexShrink: '0'
+    });
+
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      btn.textContent = '刷新中…';
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        window.location.reload();
+      }
+    });
+
+    document.body.appendChild(bar);
+  }
   </script>
 </body>
 </html>
